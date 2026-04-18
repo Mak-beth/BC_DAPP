@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contains DB password and contract address)
+.env.local
+.env*.local
+
+# Next.js build output
+frontend/.next/
+
+# Hardhat build artifacts & cache
+hardhat-project/artifacts/
+hardhat-project/cache/
+hardhat-project/typechain-types/
+
+# Claude Code internal files
+.claude/
+
+# Build info
+frontend/tsconfig.tsbuildinfo
+
+# Misc
+*.zip
+.DS_Store
+Thumbs.db
