@@ -18,6 +18,13 @@ export interface HistoryEntry {
   timestamp: number;
 }
 
+export interface CertificationEntry {
+  cid: string;
+  fileName: string;
+  timestamp: number;
+  uploader: string;
+}
+
 export interface DbUser {
   wallet_address: string;
   role: UserRole;

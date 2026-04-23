@@ -6,6 +6,23 @@ import { useWallet } from "@/lib/WalletContext";
 import { getContract } from "@/lib/contract";
 import type { CreateProductBody } from "@/lib/types";
 
+async function computeSHA256(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `sha256-${hashHex}`;
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function AddProduct() {
   const router = useRouter();
   const { walletState } = useWallet();
@@ -16,8 +33,9 @@ export default function AddProduct() {
     origin_country: "",
     batch_number: "",
   });
-
+  const [certFile, setCertFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
 
   if (walletState.role !== "MANUFACTURER") {
@@ -39,6 +57,7 @@ export default function AddProduct() {
 
     setLoading(true);
     setError("");
+    setStatus("Adding product to blockchain...");
 
     try {
       const contract = await getContract(true);
@@ -53,11 +72,7 @@ export default function AddProduct() {
 
       type ParsedLog = {
         name: string;
-        args: {
-          id?: bigint;
-          0?: bigint;
-          [key: string]: unknown;
-        };
+        args: { id?: bigint; 0?: bigint; [key: string]: unknown };
       };
 
       const parsedLogs: ParsedLog[] = receipt.logs
@@ -72,20 +87,11 @@ export default function AddProduct() {
         })
         .filter((entry: ParsedLog | null): entry is ParsedLog => entry !== null);
 
-      console.log("Parsed logs:", parsedLogs);
-
       const event = parsedLogs.find((entry) => entry.name === "ProductAdded");
-
-      if (!event) {
-        throw new Error("ProductAdded event not found");
-      }
+      if (!event) throw new Error("ProductAdded event not found");
 
       const productIdBigInt = event.args.id ?? event.args[0];
-
-      if (productIdBigInt === undefined) {
-        throw new Error("Product ID missing in event");
-      }
-
+      if (productIdBigInt === undefined) throw new Error("Product ID missing in event");
       const productId = Number(productIdBigInt);
 
       const apiBody: CreateProductBody = {
@@ -97,15 +103,40 @@ export default function AddProduct() {
         creator_wallet: walletState.address ?? "",
       };
 
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(apiBody),
-      });
+      // Best-effort DB save — blockchain is authoritative; DB failure is non-fatal
+      try {
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(apiBody),
+        });
+        if (!res.ok) {
+          console.warn("DB save failed (non-fatal):", await res.text());
+        }
+      } catch {
+        console.warn("DB unreachable (non-fatal)");
+      }
 
-      if (!res.ok) {
-        const errData = (await res.json()) as { error?: string };
-        throw new Error(errData.error || "Failed to save product to database");
+      // Optional: upload certification document
+      if (certFile) {
+        setStatus("Uploading certification document...");
+
+        const cid = await computeSHA256(certFile);
+        const fileBase64 = await fileToBase64(certFile);
+
+        const uploadRes = await fetch("/api/certifications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cid, fileName: certFile.name, fileBase64 }),
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error("Failed to store certification file");
+        }
+
+        setStatus("Anchoring certification hash on blockchain...");
+        const certTx = await contract.addCertificationHash(productId, cid, certFile.name);
+        await certTx.wait();
       }
 
       router.push(`/track/${productId}`);
@@ -117,6 +148,7 @@ export default function AddProduct() {
       }
     } finally {
       setLoading(false);
+      setStatus("");
     }
   };
 
@@ -177,13 +209,31 @@ export default function AddProduct() {
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">
+            Certification Document
+            <span className="text-gray-500 font-normal ml-1">(optional — PDF, image, or document)</span>
+          </label>
+          <input
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+            onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
+            className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+          />
+          {certFile && (
+            <p className="text-xs text-gray-500 mt-1">
+              Selected: {certFile.name} — SHA-256 will be computed and anchored on-chain
+            </p>
+          )}
+        </div>
+
         <div className="pt-4">
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-75 disabled:cursor-not-allowed text-white font-medium px-4 py-3 rounded-lg transition-colors"
           >
-            {loading ? "Adding Product to Blockchain..." : "Add Product"}
+            {loading ? (status || "Processing...") : "Add Product"}
           </button>
         </div>
       </form>

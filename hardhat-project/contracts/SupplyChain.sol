@@ -21,10 +21,18 @@ contract SupplyChain {
         uint256 timestamp;
     }
 
+    struct CertificationEntry {
+        string cid;
+        string fileName;
+        uint256 timestamp;
+        address uploader;
+    }
+
     mapping(address => Role) public roles;
     mapping(uint256 => Product) public products;
     mapping(uint256 => HistoryEntry[]) private history;
-    
+    mapping(uint256 => CertificationEntry[]) private certifications;
+
     uint256 private productCounter;
     address public immutable admin;
 
@@ -32,6 +40,7 @@ contract SupplyChain {
     event ProductAdded(uint256 indexed id, address indexed manufacturer);
     event OwnershipTransferred(uint256 indexed id, address from, address to);
     event StatusUpdated(uint256 indexed id, Status status);
+    event CertificationAdded(uint256 indexed productId, string cid, address indexed uploader);
 
     modifier onlyRole(Role role) {
         require(roles[msg.sender] == role, "SupplyChain: Unauthorized role");
@@ -142,5 +151,33 @@ contract SupplyChain {
 
     function getTotalProducts() external view returns (uint256) {
         return productCounter;
+    }
+
+    function addCertificationHash(
+        uint256 productId,
+        string memory cid,
+        string memory fileName
+    ) external productExists(productId) onlyOwner(productId) {
+        require(bytes(cid).length > 0, "SupplyChain: CID required");
+        require(bytes(fileName).length > 0, "SupplyChain: File name required");
+
+        certifications[productId].push(CertificationEntry({
+            cid: cid,
+            fileName: fileName,
+            timestamp: block.timestamp,
+            uploader: msg.sender
+        }));
+
+        history[productId].push(HistoryEntry({
+            actor: msg.sender,
+            action: "Certification Added",
+            timestamp: block.timestamp
+        }));
+
+        emit CertificationAdded(productId, cid, msg.sender);
+    }
+
+    function getCertifications(uint256 id) external view productExists(id) returns (CertificationEntry[] memory) {
+        return certifications[id];
     }
 }

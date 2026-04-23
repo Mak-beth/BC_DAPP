@@ -58,6 +58,11 @@ export default function Navbar() {
               label="Verify"
               active={pathname === "/verify"}
             />
+            <NavLink
+              href="/audit"
+              label="Audit"
+              active={pathname === "/audit"}
+            />
           </div>
         </div>
         <div className="flex items-center">
