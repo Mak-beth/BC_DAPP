@@ -4,6 +4,11 @@ import { useState } from "react";
 import { getContract, statusIndexToString } from "@/lib/contract";
 import type { DbProduct, ProductStatus } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { useToast } from "@/components/ui/Toast";
+import Link from "next/link";
 
 interface VerifyData {
   exists: boolean;
@@ -16,19 +21,18 @@ export default function VerifyPage() {
   const [productId, setProductId] = useState<string>("");
   const [result, setResult] = useState<VerifyData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const toast = useToast();
 
   const handleVerify = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
 
     const id = productId.trim();
     if (!id || isNaN(Number(id)) || Number(id) <= 0) {
-      setError("Please enter a valid product ID (positive number)");
+      toast.error("Please enter a valid product ID (positive number)");
       return;
     }
 
     setLoading(true);
-    setError("");
     setResult(null);
 
     try {
@@ -41,7 +45,7 @@ export default function VerifyPage() {
       try {
         [exists, currentOwner, statusIndex] = await contract.verifyProduct(id);
       } catch {
-        setError("Product not found on the blockchain.");
+        toast.error("Product not found on the blockchain.");
         return;
       }
 
@@ -59,8 +63,9 @@ export default function VerifyPage() {
       }
 
       setResult({ exists, currentOwner, status, dbProduct });
+      toast.success("Product verified successfully!");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Verification failed");
+      toast.error(err instanceof Error ? err.message : "Verification failed");
     } finally {
       setLoading(false);
     }
@@ -77,32 +82,19 @@ export default function VerifyPage() {
         onSubmit={handleVerify}
         className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-6"
       >
-        {error && (
-          <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-4">
-            {error}
-          </div>
-        )}
-
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Product ID
-        </label>
+        <Label>Product ID</Label>
         <div className="flex gap-3">
-          <input
+          <Input
             type="number"
             min="1"
             required
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
-            className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 flex-1 focus:outline-none focus:border-blue-500"
             placeholder="e.g. 1"
           />
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-75 disabled:cursor-not-allowed text-white font-medium px-6 py-2 rounded-lg transition-colors whitespace-nowrap"
-          >
+          <Button type="submit" loading={loading}>
             {loading ? "Verifying..." : "Verify"}
-          </button>
+          </Button>
         </div>
       </form>
 
@@ -163,12 +155,9 @@ export default function VerifyPage() {
           </div>
 
           <div className="pt-2 border-t border-gray-700">
-            <a
-              href={`/track/${productId}`}
-              className="inline-block bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              View Full History →
-            </a>
+            <Link href={`/track/${productId}`}>
+              <Button variant="secondary" size="sm">View Full History →</Button>
+            </Link>
           </div>
         </div>
       )}

@@ -4,6 +4,13 @@ import { useState, useEffect } from "react";
 import { connectWallet, shortenAddress } from "@/lib/contract";
 import { useWallet } from "@/lib/WalletContext";
 import type { UserRole, DbUser } from "@/lib/types";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Select } from "@/components/ui/Select";
+import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
+import { Wallet } from "lucide-react";
 
 type ModalState = "hidden" | "visible";
 type ConnectState = "idle" | "connecting" | "registering" | "done" | "error";
@@ -19,7 +26,7 @@ export default function WalletConnect() {
   const [connectState, setConnectState] = useState<ConnectState>("idle");
   const [modalState, setModalState] = useState<ModalState>("hidden");
   const [pendingAddress, setPendingAddress] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const toast = useToast();
 
   const [form, setForm] = useState<RegisterForm>({
     companyName: "",
@@ -39,7 +46,7 @@ export default function WalletConnect() {
       });
       setModalState("hidden");
       setConnectState("done");
-      setError("");
+      toast.success("Wallet connected successfully!");
     } else if (res.status === 404) {
       setPendingAddress(address);
       setModalState("visible");
@@ -61,15 +68,14 @@ export default function WalletConnect() {
   const handleConnect = async () => {
     try {
       setConnectState("connecting");
-      setError("");
 
       const address = await connectWallet();
       await syncWalletAddress(address);
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        toast.error(err.message);
       } else {
-        setError("An unknown error occurred");
+        toast.error("An unknown error occurred");
       }
       setConnectState("error");
     }
@@ -88,7 +94,6 @@ export default function WalletConnect() {
         setPendingAddress("");
         setModalState("hidden");
         setConnectState("idle");
-        setError("");
         return;
       }
 
@@ -97,9 +102,9 @@ export default function WalletConnect() {
         await syncWalletAddress(nextAddress);
       } catch (err: unknown) {
         if (err instanceof Error) {
-          setError(err.message);
+          toast.error(err.message);
         } else {
-          setError("An unknown error occurred");
+          toast.error("An unknown error occurred");
         }
         setConnectState("error");
       }
@@ -120,7 +125,6 @@ export default function WalletConnect() {
     setPendingAddress("");
     setModalState("hidden");
     setConnectState("idle");
-    setError("");
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
@@ -128,8 +132,6 @@ export default function WalletConnect() {
     if (!form.companyName.trim()) return;
 
     try {
-      setError("");
-      
       const payload = {
         wallet_address: pendingAddress,
         role: form.role,
@@ -157,47 +159,35 @@ export default function WalletConnect() {
 
       setModalState("hidden");
       setConnectState("done");
+      toast.success("User registered successfully!");
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        toast.error(err.message);
       } else {
-        setError("Registration failed");
+        toast.error("Registration failed");
       }
     }
   };
 
-  const getRoleBadgeColor = (role: UserRole) => {
-    switch (role) {
-      case "MANUFACTURER":
-        return "bg-blue-900 text-blue-200 border border-blue-700";
-      case "DISTRIBUTOR":
-        return "bg-amber-900 text-amber-200 border border-amber-700";
-      case "RETAILER":
-        return "bg-green-900 text-green-200 border border-green-700";
-      default:
-        return "bg-gray-800 text-gray-300 border border-gray-600";
-    }
+  const roleGlow: Record<UserRole, string> = {
+    NONE:         "bg-gray-500/15 text-gray-300 border border-gray-500/30",
+    MANUFACTURER: "bg-indigo-500/15 text-indigo-200 border border-indigo-400/40 shadow-[0_0_16px_rgba(99,102,241,0.35)]",
+    DISTRIBUTOR:  "bg-amber-500/15 text-amber-200 border border-amber-400/40 shadow-[0_0_16px_rgba(245,158,11,0.35)]",
+    RETAILER:     "bg-emerald-500/15 text-emerald-200 border border-emerald-400/40 shadow-[0_0_16px_rgba(16,185,129,0.35)]",
   };
 
   if (walletState.isConnected && walletState.address) {
     return (
-      <div className="flex items-center space-x-3">
-        <span
-          className={`text-xs font-semibold px-2 py-1 rounded-md ${getRoleBadgeColor(
-            walletState.role
-          )}`}
-        >
+      <div className="flex items-center gap-3">
+        <span className={`text-[11px] font-semibold px-2 py-1 rounded-md ${roleGlow[walletState.role]}`}>
           {walletState.role}
         </span>
-        <span className="font-mono text-sm text-gray-300">
+        <span className="font-mono text-xs text-gray-300 hidden sm:inline">
           {shortenAddress(walletState.address)}
         </span>
-        <button
-          onClick={handleDisconnect}
-          className="text-sm text-gray-400 hover:text-white hover:underline transition"
-        >
+        <Button variant="ghost" size="sm" onClick={handleDisconnect}>
           Disconnect
-        </button>
+        </Button>
       </div>
     );
   }
@@ -205,84 +195,51 @@ export default function WalletConnect() {
   return (
     <>
       <div className="flex items-center space-x-2">
-        {error && <span className="text-red-400 text-sm hidden sm:inline-block">{error}</span>}
-        <button
-          onClick={handleConnect}
-          disabled={connectState === "connecting"}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          {connectState === "connecting" ? "Connecting..." : "Connect Wallet"}
-        </button>
+        <Button onClick={handleConnect} loading={connectState === "connecting"} size="sm" icon={<Wallet className="w-4 h-4" />}>
+          Connect Wallet
+        </Button>
       </div>
 
-      {modalState === "visible" && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-gray-800 border border-gray-600 rounded-xl p-6 w-full max-w-md mx-4">
-            <h2 className="text-xl font-bold text-white mb-4">Register User</h2>
-            <p className="text-sm text-gray-400 mb-6 font-mono">
-              {pendingAddress}
-            </p>
-
-            <form onSubmit={handleRegisterSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Company Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={form.companyName}
-                  onChange={(e) =>
-                    setForm({ ...form, companyName: e.target.value })
-                  }
-                  className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Role
-                </label>
-                <select
-                  value={form.role}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      role: e.target.value as Exclude<UserRole, "NONE">,
-                    })
-                  }
-                  className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:outline-none focus:border-blue-500"
-                >
-                  <option value="MANUFACTURER">Manufacturer</option>
-                  <option value="DISTRIBUTOR">Distributor</option>
-                  <option value="RETAILER">Retailer</option>
-                </select>
-              </div>
-
-              {error && <div className="text-red-400 text-sm">{error}</div>}
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setModalState("hidden");
-                    setConnectState("idle");
-                  }}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-                >
-                  Register
-                </button>
-              </div>
-            </form>
+      <Modal
+        open={modalState === "visible"}
+        onClose={() => { setModalState("hidden"); setConnectState("idle"); }}
+        title="Register User"
+      >
+        <p className="text-sm text-gray-400 mb-5 font-mono break-all">{pendingAddress}</p>
+        <form onSubmit={handleRegisterSubmit} className="space-y-4">
+          <div>
+            <Label>Company Name</Label>
+            <Input
+              required
+              value={form.companyName}
+              onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+            />
           </div>
-        </div>
-      )}
+          <div>
+            <Label>Role</Label>
+            <Select
+              value={form.role}
+              onChange={(e) =>
+                setForm({ ...form, role: e.target.value as Exclude<UserRole, "NONE"> })
+              }
+            >
+              <option value="MANUFACTURER">Manufacturer</option>
+              <option value="DISTRIBUTOR">Distributor</option>
+              <option value="RETAILER">Retailer</option>
+            </Select>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => { setModalState("hidden"); setConnectState("idle"); }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Register</Button>
+          </div>
+        </form>
+      </Modal>
     </>
   );
 }

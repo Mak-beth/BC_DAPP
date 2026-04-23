@@ -1,19 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/lib/WalletContext";
 import { getContract } from "@/lib/contract";
 import type { CreateProductBody } from "@/lib/types";
+import { useToast } from "@/components/ui/Toast";
+import { Label } from "@/components/ui/Label";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Button } from "@/components/ui/Button";
+import { FileDropzone } from "@/components/ui/FileDropzone";
+import { Stepper } from "./_components/Stepper";
+import { SuccessScreen } from "./_components/SuccessScreen";
 
 async function computeSHA256(file: File): Promise<string> {
   const buffer = await file.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  return `sha256-${hashHex}`;
+  return "sha256-" + Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -26,73 +32,44 @@ async function fileToBase64(file: File): Promise<string> {
 export default function AddProduct() {
   const router = useRouter();
   const { walletState } = useWallet();
+  const toast = useToast();
 
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    origin_country: "",
-    batch_number: "",
-  });
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [form, setForm] = useState({ name: "", description: "", origin_country: "", batch_number: "" });
   const [certFile, setCertFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [status, setStatus] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus]   = useState("");
+  const [successId, setSuccessId] = useState<number | null>(null);
 
   if (walletState.role !== "MANUFACTURER") {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
-        <p className="text-gray-400">Only manufacturers can add products</p>
+        <p className="text-gray-400">Only manufacturers can add products.</p>
       </div>
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
+  if (successId !== null) return <SuccessScreen productId={successId} />;
 
-    if (!form.name.trim() || !form.origin_country.trim() || !form.batch_number.trim()) {
-      setError("Please fill in all required fields (Name, Origin, Batch Number)");
-      return;
-    }
+  const stepValid = step === 0
+    ? form.name.trim() && form.origin_country.trim() && form.batch_number.trim()
+    : true;
 
+  async function handleSubmit() {
     setLoading(true);
-    setError("");
     setStatus("Adding product to blockchain...");
-
     try {
       const contract = await getContract(true);
-
-      const tx = await contract.addProduct(
-        form.name.trim(),
-        form.origin_country.trim(),
-        form.batch_number.trim()
-      );
-
+      const tx = await contract.addProduct(form.name.trim(), form.origin_country.trim(), form.batch_number.trim());
       const receipt = await tx.wait();
 
-      type ParsedLog = {
-        name: string;
-        args: { id?: bigint; 0?: bigint; [key: string]: unknown };
-      };
-
-      const parsedLogs: ParsedLog[] = receipt.logs
-        .map((log: unknown) => {
-          try {
-            return contract.interface.parseLog(
-              log as { topics: string[]; data: string }
-            ) as unknown as ParsedLog;
-          } catch {
-            return null;
-          }
-        })
-        .filter((entry: ParsedLog | null): entry is ParsedLog => entry !== null);
-
-      const event = parsedLogs.find((entry) => entry.name === "ProductAdded");
+      const parsed = receipt.logs
+        .map((log: any) => { try { return contract.interface.parseLog(log); } catch { return null; } })
+        .filter(Boolean);
+      const event = parsed.find((e: any) => e.name === "ProductAdded");
       if (!event) throw new Error("ProductAdded event not found");
-
-      const productIdBigInt = event.args.id ?? event.args[0];
-      if (productIdBigInt === undefined) throw new Error("Product ID missing in event");
-      const productId = Number(productIdBigInt);
+      const productId = Number(event.args.id ?? event.args[0]);
 
       const apiBody: CreateProductBody = {
         name: form.name.trim(),
@@ -102,141 +79,114 @@ export default function AddProduct() {
         chain_product_id: productId,
         creator_wallet: walletState.address ?? "",
       };
+      fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiBody),
+      }).catch(() => {/* non-fatal */});
 
-      // Best-effort DB save — blockchain is authoritative; DB failure is non-fatal
-      try {
-        const res = await fetch("/api/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(apiBody),
-        });
-        if (!res.ok) {
-          console.warn("DB save failed (non-fatal):", await res.text());
-        }
-      } catch {
-        console.warn("DB unreachable (non-fatal)");
-      }
-
-      // Optional: upload certification document
       if (certFile) {
-        setStatus("Uploading certification document...");
-
+        setStatus("Anchoring certification...");
         const cid = await computeSHA256(certFile);
         const fileBase64 = await fileToBase64(certFile);
-
         const uploadRes = await fetch("/api/certifications", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ cid, fileName: certFile.name, fileBase64 }),
         });
-
-        if (!uploadRes.ok) {
-          throw new Error("Failed to store certification file");
-        }
-
-        setStatus("Anchoring certification hash on blockchain...");
+        if (!uploadRes.ok) throw new Error("Failed to store certification file");
         const certTx = await contract.addCertificationHash(productId, cid, certFile.name);
         await certTx.wait();
       }
 
-      router.push(`/track/${productId}`);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to add product due to an unknown error");
-      }
+      toast.success(`Product #${productId} added on-chain`);
+      setSuccessId(productId);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add product");
     } finally {
       setLoading(false);
       setStatus("");
     }
-  };
+  }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">Add New Product</h1>
+    <div className="max-w-3xl mx-auto">
+      <h1 className="text-3xl font-bold text-gradient mb-2">Add New Product</h1>
+      <p className="text-gray-400 mb-6 text-sm">Three quick steps, then your product lives on-chain.</p>
 
-      <form onSubmit={handleSubmit} className="bg-gray-800 border border-gray-700 rounded-xl p-6 space-y-4">
-        {error && (
-          <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        )}
+      <Stepper current={step} />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Product Name *</label>
-          <input
-            type="text"
-            required
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:outline-none focus:border-blue-500"
-            placeholder="e.g. Premium Coffee Beans"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Origin Country *</label>
-          <input
-            type="text"
-            required
-            value={form.origin_country}
-            onChange={(e) => setForm({ ...form, origin_country: e.target.value })}
-            className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:outline-none focus:border-blue-500"
-            placeholder="e.g. Colombia"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Batch Number *</label>
-          <input
-            type="text"
-            required
-            value={form.batch_number}
-            onChange={(e) => setForm({ ...form, batch_number: e.target.value })}
-            className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:outline-none focus:border-blue-500"
-            placeholder="e.g. BATCH-001"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-          <textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:outline-none focus:border-blue-500 min-h-[100px]"
-            placeholder="Optional product description"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Certification Document
-            <span className="text-gray-500 font-normal ml-1">(optional — PDF, image, or document)</span>
-          </label>
-          <input
-            type="file"
-            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-            onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
-            className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
-          />
-          {certFile && (
-            <p className="text-xs text-gray-500 mt-1">
-              Selected: {certFile.name} — SHA-256 will be computed and anchored on-chain
-            </p>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -16 }}
+          transition={{ duration: 0.22 }}
+          className="rounded-xl border border-border-subtle bg-bg-raised/60 backdrop-blur-xl p-6 space-y-5"
+        >
+          {step === 0 && (
+            <>
+              <div>
+                <Label>Product Name *</Label>
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Premium Coffee Beans" />
+              </div>
+              <div>
+                <Label>Origin Country *</Label>
+                <Input value={form.origin_country} onChange={(e) => setForm({ ...form, origin_country: e.target.value })} placeholder="e.g. Colombia" />
+              </div>
+              <div>
+                <Label>Batch Number *</Label>
+                <Input mono value={form.batch_number} onChange={(e) => setForm({ ...form, batch_number: e.target.value })} placeholder="e.g. BATCH-001" />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional" />
+              </div>
+            </>
           )}
-        </div>
 
-        <div className="pt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-75 disabled:cursor-not-allowed text-white font-medium px-4 py-3 rounded-lg transition-colors"
-          >
-            {loading ? (status || "Processing...") : "Add Product"}
-          </button>
-        </div>
-      </form>
+          {step === 1 && (
+            <>
+              <Label>Certification Document <span className="text-gray-500 font-normal ml-1">(optional)</span></Label>
+              <FileDropzone
+                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                file={certFile}
+                onFile={setCertFile}
+                hint="SHA-256 will be anchored on-chain (IPFS in Phase 15)"
+              />
+            </>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-400">Review the details below. You'll be asked to confirm in MetaMask.</p>
+              <div className="rounded-lg border border-border-subtle bg-white/[0.03] p-4 space-y-1 text-sm">
+                <p><span className="text-gray-500">Name:</span> <span className="text-white font-medium">{form.name}</span></p>
+                <p><span className="text-gray-500">Origin:</span> {form.origin_country}</p>
+                <p><span className="text-gray-500">Batch:</span> <span className="font-mono">{form.batch_number}</span></p>
+                {form.description && <p><span className="text-gray-500">Description:</span> {form.description}</p>}
+                {certFile && <p><span className="text-gray-500">Certification:</span> {certFile.name}</p>}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="mt-6 flex items-center justify-between">
+        <Button variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1) as 0 | 1 | 2)} disabled={step === 0 || loading}>
+          Back
+        </Button>
+        {step < 2 ? (
+          <Button onClick={() => stepValid && setStep((s) => Math.min(2, s + 1) as 0 | 1 | 2)} disabled={!stepValid}>
+            Continue
+          </Button>
+        ) : (
+          <Button onClick={handleSubmit} loading={loading}>
+            {loading ? (status || "Processing...") : "Confirm & Submit"}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
