@@ -5,6 +5,8 @@ import { WalletProvider } from "@/lib/WalletContext";
 import Navbar from "@/components/Navbar";
 import { ToastProvider } from "@/components/ui/Toast";
 import { NetworkBanner } from "@/components/NetworkBanner";
+import { RouteProgress } from "@/components/RouteProgress";
+import { PageTransition } from "@/components/PageTransition";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
@@ -21,8 +23,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WalletProvider>
           <ToastProvider>
             <NetworkBanner />
+            <RouteProgress />
             <Navbar />
-            <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
+            <main className="max-w-6xl mx-auto px-4 py-8">
+              <PageTransition>{children}</PageTransition>
+            </main>
           </ToastProvider>
         </WalletProvider>
       </body>

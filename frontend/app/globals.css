@@ -41,10 +41,10 @@ body::after {
 /* Reduced-motion kill-switch (fully enforced in Phase 18) */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
   }
+  body::before { animation: none !important; }
 }
 
 /* Utility: gradient text */

@@ -59,14 +59,31 @@ export async function connectWallet(): Promise<string> {
   }
 
   const provider = new BrowserProvider(ethWindow.ethereum);
-  await provider.send("wallet_requestPermissions", [{ eth_accounts: {} }]);
-  const accounts = await provider.send("eth_requestAccounts", []) as string[];
+  
+  try {
+    await provider.send("wallet_requestPermissions", [{ eth_accounts: {} }]);
+    const accounts = await provider.send("eth_requestAccounts", []) as string[];
 
-  if (!accounts || accounts.length === 0) {
-    throw new Error("No accounts found from wallet");
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No accounts found from wallet");
+    }
+
+    return accounts[0];
+  } catch (err: any) {
+    const errorStr = err?.message || err?.toString() || "";
+    
+    // MetaMask already has a pending request
+    if (err?.code === -32002 || err?.error?.code === -32002 || errorStr.includes("-32002") || errorStr.includes("already pending")) {
+      throw new Error("A connection request is already pending. Please open your wallet extension to accept it.");
+    }
+    
+    // User rejected the request
+    if (err?.code === 4001 || err?.error?.code === 4001 || errorStr.includes("4001") || errorStr.includes("rejected")) {
+      throw new Error("Connection request was rejected.");
+    }
+
+    throw err;
   }
-
-  return accounts[0];
 }
 
 export function shortenAddress(address: string): string {

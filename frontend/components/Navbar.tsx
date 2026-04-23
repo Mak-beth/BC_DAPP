@@ -44,7 +44,7 @@ export default function Navbar() {
                 <li key={link.href} className="relative">
                   <Link
                     href={link.href}
-                    className="relative px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                    className="relative px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base"
                   >
                     {active && (
                       <motion.span
@@ -96,7 +96,7 @@ export default function Navbar() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base ${
                       active
                         ? "bg-indigo-500/20 text-white border border-indigo-400/40"
                         : "text-gray-300 hover:text-white hover:bg-white/5"

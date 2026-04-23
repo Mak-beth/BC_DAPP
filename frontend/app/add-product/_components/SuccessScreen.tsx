@@ -4,6 +4,7 @@ import Link from "next/link";
 import confetti from "canvas-confetti";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ProductQR } from "@/components/ProductQR";
 
 export function SuccessScreen({ productId }: { productId: number }) {
   useEffect(() => {
@@ -21,9 +22,8 @@ export function SuccessScreen({ productId }: { productId: number }) {
         <p className="text-gray-400 mt-2">Product ID: <span className="font-mono text-white">#{productId}</span></p>
       </div>
 
-      {/* QR placeholder — Phase 16 replaces this with the real <ProductQR> */}
-      <div className="mx-auto w-44 h-44 rounded-xl border border-dashed border-border-strong bg-white/[0.02] grid place-items-center text-gray-500 text-xs">
-        QR code<br/>(Phase&nbsp;16)
+      <div className="flex justify-center">
+        <ProductQR productId={productId} size={176} />
       </div>
 
       <div className="flex justify-center gap-3">

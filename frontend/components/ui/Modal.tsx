@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import FocusTrap from "focus-trap-react";
 import { X } from "lucide-react";
@@ -14,6 +15,12 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children, maxWidth = "max-w-md" }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -30,7 +37,9 @@ export function Modal({ open, onClose, title, children, maxWidth = "max-w-md" }:
     }
   }, [open]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <FocusTrap focusTrapOptions={{ escapeDeactivates: false, allowOutsideClick: true }}>
@@ -38,7 +47,7 @@ export function Modal({ open, onClose, title, children, maxWidth = "max-w-md" }:
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
           >
             {/* Backdrop */}
             <motion.div
@@ -70,6 +79,7 @@ export function Modal({ open, onClose, title, children, maxWidth = "max-w-md" }:
           </motion.div>
         </FocusTrap>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

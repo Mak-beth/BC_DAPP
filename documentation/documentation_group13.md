@@ -115,6 +115,17 @@ CREATE TABLE IF NOT EXISTS events_log (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
+### Step 3b — Start IPFS
+
+Install Kubo from <https://docs.ipfs.tech/install/command-line/> and run:
+
+```bash
+ipfs init     # first time only
+ipfs daemon
+```
+
+The DApp expects the HTTP API at `http://127.0.0.1:5001` and the gateway at `http://127.0.0.1:8080`.
+
 ### Step 4 — Start the Local Blockchain
 
 In a dedicated terminal:

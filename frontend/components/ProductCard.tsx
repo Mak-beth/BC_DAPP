@@ -32,7 +32,7 @@ export default function ProductCard({ product, status }: ProductCardProps) {
           <p><span className="text-gray-500">Origin:</span> {product.origin_country || "N/A"}</p>
           <p><span className="text-gray-500">Created:</span> {new Date(product.created_at).toLocaleDateString()}</p>
         </div>
-        <Link href={`/track/${product.chain_product_id}`} className="block">
+        <Link href={`/track/${product.chain_product_id}`} className="block focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:rounded-xl">
           <Button size="sm" className="w-full">Track Product</Button>
         </Link>
       </div>

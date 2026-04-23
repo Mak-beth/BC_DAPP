@@ -1,36 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { create } from "kubo-rpc-client";
 
-const uploadsDir = path.join(process.cwd(), "public", "uploads");
+export const runtime = "nodejs";
 
-function ensureUploadsDir() {
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-}
+const ipfs = create({ url: process.env.IPFS_API_URL ?? "http://127.0.0.1:5001" });
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as {
-      cid: string;
-      fileName: string;
-      fileBase64: string;
-    };
-
-    if (!body.cid || !body.fileName || !body.fileBase64) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    const form = await req.formData();
+    const file = form.get("file");
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
-
-    ensureUploadsDir();
-
-    const buffer = Buffer.from(body.fileBase64, "base64");
-    const filePath = path.join(uploadsDir, body.cid);
-    fs.writeFileSync(filePath, buffer);
-
-    return NextResponse.json({ success: true, cid: body.cid });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Failed to save file";
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const added = await ipfs.add({ path: file.name, content: buffer }, { cidVersion: 1, pin: true });
+    return NextResponse.json({ cid: added.cid.toString(), fileName: file.name });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "IPFS upload failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

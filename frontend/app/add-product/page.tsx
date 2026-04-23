@@ -15,19 +15,7 @@ import { FileDropzone } from "@/components/ui/FileDropzone";
 import { Stepper } from "./_components/Stepper";
 import { SuccessScreen } from "./_components/SuccessScreen";
 
-async function computeSHA256(file: File): Promise<string> {
-  const buffer = await file.arrayBuffer();
-  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-  return "sha256-" + Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-async function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(",")[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+import { uploadToIPFS } from "@/lib/ipfs";
 
 export default function AddProduct() {
   const router = useRouter();
@@ -86,16 +74,10 @@ export default function AddProduct() {
       }).catch(() => {/* non-fatal */});
 
       if (certFile) {
-        setStatus("Anchoring certification...");
-        const cid = await computeSHA256(certFile);
-        const fileBase64 = await fileToBase64(certFile);
-        const uploadRes = await fetch("/api/certifications", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cid, fileName: certFile.name, fileBase64 }),
-        });
-        if (!uploadRes.ok) throw new Error("Failed to store certification file");
-        const certTx = await contract.addCertificationHash(productId, cid, certFile.name);
+        setStatus("Uploading certification to IPFS...");
+        const { cid, fileName } = await uploadToIPFS(certFile);
+        setStatus("Anchoring IPFS CID on-chain...");
+        const certTx = await contract.addCertificationHash(productId, cid, fileName);
         await certTx.wait();
       }
 
