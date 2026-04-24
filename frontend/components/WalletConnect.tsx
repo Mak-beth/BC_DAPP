@@ -43,6 +43,7 @@ export default function WalletConnect() {
         address,
         role: user.role,
         isConnected: true,
+        companyName: user.company_name ?? null,
       });
       setModalState("hidden");
       setConnectState("done");
@@ -155,6 +156,7 @@ export default function WalletConnect() {
         address: pendingAddress,
         role: form.role,
         isConnected: true,
+        companyName: form.companyName.trim(),
       });
 
       setModalState("hidden");
@@ -182,6 +184,9 @@ export default function WalletConnect() {
         <span className={`text-[11px] font-semibold px-2 py-1 rounded-md ${roleGlow[walletState.role]}`}>
           {walletState.role}
         </span>
+        {walletState.companyName && (
+          <span className="text-xs font-medium text-white hidden sm:inline">{walletState.companyName}</span>
+        )}
         <span className="font-mono text-xs text-gray-300 hidden sm:inline">
           {shortenAddress(walletState.address)}
         </span>

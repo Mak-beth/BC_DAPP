@@ -13,6 +13,7 @@ const defaultWalletState: WalletState = {
   address: null,
   role: "NONE",
   isConnected: false,
+  companyName: null,
 };
 
 export const WalletContext = createContext<WalletContextValue>({

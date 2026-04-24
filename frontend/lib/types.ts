@@ -83,6 +83,7 @@ export interface WalletState {
   address: string | null;
   role: UserRole;
   isConnected: boolean;
+  companyName: string | null;
 }
 
 export interface VerifyResult {

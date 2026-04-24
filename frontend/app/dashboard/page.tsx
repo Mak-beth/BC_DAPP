@@ -107,7 +107,9 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
       >
         <p className="text-sm text-gray-400">Welcome back</p>
-        <h1 className="text-3xl font-bold text-gradient">Your Supply Chain</h1>
+        <h1 className="text-3xl font-bold text-gradient">
+          {walletState.companyName ?? "Your Supply Chain"}
+        </h1>
         <p className="text-gray-400 mt-1 text-sm">
           Role: <span className="font-semibold text-white">{walletState.role}</span>
           {" · "}
