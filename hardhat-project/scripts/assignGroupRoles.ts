@@ -1,18 +1,27 @@
 import { ethers } from "hardhat";
+import fs from "fs";
+import path from "path";
 
 async function main() {
   const [admin] = await ethers.getSigners();
-  const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+  
+  // Automatically read the latest contract address from the frontend .env.local
+  const envPath = path.resolve(__dirname, "../../frontend/.env.local");
+  const envFile = fs.readFileSync(envPath, "utf8");
+  const match = envFile.match(/NEXT_PUBLIC_CONTRACT_ADDRESS=(0x[a-fA-F0-9]{40})/);
+  if (!match) throw new Error("Could not find NEXT_PUBLIC_CONTRACT_ADDRESS in .env.local");
+  const contractAddress = match[1];
 
   const SupplyChain = await ethers.getContractFactory("SupplyChain");
   const contract = SupplyChain.attach(contractAddress) as any;
 
   // 👇 PASTE YOUR TEAM'S WALLET ADDRESSES HERE
   const team = [
-    { name: "Abubaker", address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", role: 1 }, // MANUFACTURER
-    { name: "Taha", address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", role: 1 }, // MANUFACTURER
-    { name: "Ibrahim", address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", role: 2 }, // DISTRIBUTOR
-    { name: "Noor", address: "0x90F79bf6EB2c4f870365E785982E1f101E93b906", role: 3 }, // RETAILER
+    { name: "Manufacturer", address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", role: 1 },
+    { name: "Distributor", address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", role: 2 },
+    { name: "Retailer", address: "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc", role: 3 },
+    { name: "Abubaker", address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", role: 1 }, // Admin
+    { name: "Noor", address: "0x90F79bf6EB2c4f870365E785982E1f101E93b906", role: 1 },
   ];
 
   console.log("Assigning roles to group members...");

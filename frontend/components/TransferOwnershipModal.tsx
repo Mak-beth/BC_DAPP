@@ -37,6 +37,19 @@ export function TransferOwnershipModal({ open, onClose, productId, onSuccess, su
       const contract = await getContract(true);
       const tx = await contract.transferOwnership(productId, address);
       await tx.wait();
+
+      // Log event
+      fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chain_product_id: productId,
+          actor_address: walletState.address,
+          action: "Ownership Transferred",
+          notes: `Transferred to ${address}`,
+        }),
+      }).catch(() => {});
+
       toast.success(`Ownership of #${productId} transferred`);
       if (saveNew && name.trim()) {
         try {

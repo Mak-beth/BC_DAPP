@@ -31,6 +31,19 @@ export function IssueRecallModal({ productId, isRecalled, open, onClose, onSucce
         tx = await contract.issueRecall(productId, reason.trim());
       }
       await tx.wait();
+
+      // Log event
+      fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chain_product_id: productId,
+          actor_address: (await (await getContract(true)).runner as any)?.address,
+          action: isRecalled ? "Recall Lifted" : "Product Recalled",
+          notes: isRecalled ? "Manufacturer cleared the recall status" : `Reason: ${reason.trim()}`,
+        }),
+      }).catch(() => {});
+
       toast.success(isRecalled ? "Recall lifted." : "Recall issued on-chain.");
       setReason("");
       onSuccess();

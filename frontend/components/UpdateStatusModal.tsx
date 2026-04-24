@@ -37,6 +37,19 @@ export function UpdateStatusModal({ open, onClose, productId, current, onSuccess
       const contract = await getContract(true);
       const tx = await contract.updateStatus(productId, statusIndex[target]);
       await tx.wait();
+      
+      // Log event
+      fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chain_product_id: productId,
+          actor_address: (await (await getContract(true)).runner as any)?.address,
+          action: "Status Updated",
+          notes: `Advanced from ${current} to ${target}`,
+        }),
+      }).catch(() => {});
+
       toast.success(`Status advanced to ${target}`);
       onSuccess();
       onClose();

@@ -38,23 +38,36 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await req.json()) as CreateEventBody;
+    const body = (await req.json()) as CreateEventBody & { chain_product_id?: number };
 
-    if (body.product_id === undefined || !body.actor_address || !body.action) {
+    let dbProductId = body.product_id;
+
+    // If only chain_product_id is provided, look up the database id
+    if (dbProductId === undefined && body.chain_product_id !== undefined) {
+      const products = await query<{ id: number }>(
+        "SELECT id FROM products WHERE chain_product_id = ? LIMIT 1",
+        [body.chain_product_id]
+      );
+      if (products.length > 0) {
+        dbProductId = products[0].id;
+      }
+    }
+
+    if (dbProductId === undefined || !body.actor_address || !body.action) {
       return NextResponse.json(
-        { error: "product_id, actor_address and action are required" },
+        { error: "product_id (or chain_product_id), actor_address and action are required" },
         { status: 400 }
       );
     }
 
     await query(
       "INSERT INTO events_log (product_id, actor_address, action, notes) VALUES (?, ?, ?, ?)",
-      [body.product_id, body.actor_address, body.action, body.notes || null]
+      [dbProductId, body.actor_address, body.action, body.notes || null]
     );
 
     const rows = await query<DbEvent>(
       "SELECT * FROM events_log WHERE product_id = ? ORDER BY id DESC LIMIT 1",
-      [body.product_id]
+      [dbProductId]
     );
 
     if (rows.length === 0) {

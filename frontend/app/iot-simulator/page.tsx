@@ -51,6 +51,19 @@ export default function IoTSimulatorPage() {
       const contract = await getContract(true);
       const tx = await contract.logSensorReading(id, temp, humidity);
       await tx.wait();
+
+      // Log event
+      fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chain_product_id: id,
+          actor_address: walletState.address,
+          action: "Sensor Reading",
+          notes: `Temp: ${(temp / 10).toFixed(1)}°C, Humidity: ${humidity}%`,
+        }),
+      }).catch(() => {});
+
       toast.success("Sensor reading recorded on-chain.");
       await fetchReadings(id);
     } catch (err) {

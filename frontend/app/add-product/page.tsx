@@ -67,11 +67,26 @@ export default function AddProduct() {
         chain_product_id: productId,
         creator_wallet: walletState.address ?? "",
       };
-      fetch("/api/products", {
+      const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(apiBody),
-      }).catch(() => {/* non-fatal */});
+      });
+      const dbData = await res.json();
+      const dbProductId = dbData?.data?.id;
+
+      if (dbProductId) {
+        fetch("/api/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            product_id: dbProductId,
+            actor_address: walletState.address,
+            action: "Product Created",
+            notes: `Manufacturer added product ${form.name.trim()} (Batch: ${form.batch_number.trim()})`,
+          }),
+        }).catch(() => {});
+      }
 
       if (certFile) {
         setStatus("Uploading certification to IPFS...");
@@ -79,6 +94,19 @@ export default function AddProduct() {
         setStatus("Anchoring IPFS CID on-chain...");
         const certTx = await contract.addCertificationHash(productId, cid, fileName);
         await certTx.wait();
+
+        if (dbProductId) {
+          fetch("/api/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              product_id: dbProductId,
+              actor_address: walletState.address,
+              action: "Certification Added",
+              notes: `IPFS CID: ${cid}`,
+            }),
+          }).catch(() => {});
+        }
       }
 
       toast.success(`Product #${productId} added on-chain`);
