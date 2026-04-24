@@ -220,7 +220,7 @@ After taking your screenshots, paste this into Claude:
 
 ```
 I have taken screenshots and saved them in documentation/screenshots/.
-The files are named: dashboard.png, add-product-review.png, add-product-success.png, track-timeline.png, track-sensor-chart.png, track-recall-banner.png, issue-recall-modal.png, verify-seal.png, verify-recall.png, verify-qr-scanner.png, ipfs-certificate.png, audit-filters.png, iot-simulator.png, contacts-page.png, transfer-modal.png, theme-aurora.png
+The files are named: dashboard.png, add-product-review.png, add-product-success.png, track-timeline.png, track-sensor-chart.png, track-recall-banner.png, issue-recall-modal.png, verify-seal.png, verify-recall.png, verify-qr-scanner.png, audit-filters.png, iot-simulator.png, contacts-page.png, transfer-modal.png, theme-aurora.png
 
 Please update documentation/documentation_group13.md to replace every [INSERT SCREENSHOT ...] placeholder with the correct ![alt text](screenshots/filename.png) markdown image tag.
 ```
