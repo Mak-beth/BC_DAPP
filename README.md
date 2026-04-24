@@ -3,4 +3,4 @@
 Short overview of the project.
 
 ## Walkthrough
-- [Enhancement Plan](enhancement-plan/README.md)
+- [Readme file](enhancement-plan/README.md)
