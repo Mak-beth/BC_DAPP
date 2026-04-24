@@ -55,7 +55,9 @@ This table must appear **before** the Executive Summary. It lets the examiner ma
 | §5.3 | addProduct / transferOwnership / addCertificationHash / verifyProduct | Figures 2.1, 4.1, 6.2, 5.2 |
 | §5.2.1 | MetaMask role-gated auth | Figures 3.1, 3.2 |
 | §5.3 transferOwnership | Transfer ownership via UI (one-click, ContactPicker) | Figures 11.1, 11.2, 11.3 |
-| §3.2 Professional quality | Three-theme design system (Nebula / Aurora / Obsidian) | Figures 12.1, 12.2, 12.3, 12.4 |
+| §3.2 Professional quality | Three-theme design system (Nebula / Aurora / Obsidian) | Figures 15.1, 15.2, 15.3, 15.4 |
+| §5.4 IoT integration | Real-time sensor data logging on-chain + live chart | Figures 13.1, 13.2, 13.3 |
+| §5.3 Product safety | On-chain product recall system with UI issue/lift flow | Figures 14.1, 14.2, 14.3 |
 ```
 
 ### 3. Executive Summary (≈ half a page)
@@ -215,16 +217,36 @@ Prose: The contacts table (MySQL) stores owner-wallet → contact-address mappin
 - **Figure 11.3** — `/api/contacts` POST handler (upsert) from `frontend/app/api/contacts/route.ts`.
 - **Figure 11.4** — `UpdateStatusModal` sequential-advance logic from `frontend/components/UpdateStatusModal.tsx`.
 
-#### Feature 10 — Three-theme design system (Phase 22)
+#### Feature 11 — IoT Sensor Simulation (Phase 23)
+
+*Justification opener:* "This feature implements the IoT sensor integration described in Part 1 §5.4 by adding an on-chain `logSensorReading` function that stores temperature, humidity, and location readings keyed by product ID, and exposing them as a live chart on the track page — closing the gap between the Part 1 proposal and Part 2 delivery."
+
+Prose: A dedicated `/iot-simulator` page lets any DISTRIBUTOR or RETAILER wallet submit sensor readings (temperature °C, humidity %, location string) for any product. Readings are stored on-chain in a `SensorEntry` struct array via `getSensorReadings`. The track page fetches all readings and renders them in a `SensorChart` component (recharts line chart, temperature on the primary axis, humidity on the secondary).
+
+- **Figure 13.1** — `logSensorReading` Solidity function from `hardhat-project/contracts/SupplyChain.sol`.
+- **Figure 13.2** — `getSensorReadings` Solidity view function from `hardhat-project/contracts/SupplyChain.sol`.
+- **Figure 13.3** — `SensorChart` component from `frontend/components/SensorChart.tsx`.
+
+#### Feature 12 — Product Recall System (Phase 24)
+
+*Justification opener:* "This feature implements the product safety management requirement implicit in Part 1 §5.3 and satisfies the 'complete implementation of proposed smart-contract functions' marking criterion by giving the MANUFACTURER role the ability to issue and lift product recalls on-chain, with recall status surfaced as a red banner on every public-facing product page."
+
+Prose: The contract stores a `RecallEntry` struct (`active`, `reason`, `issuedBy`, `timestamp`) per product in a `recalls` mapping. `issueRecall` and `liftRecall` are gated to `onlyRole(MANUFACTURER)` and append entries to the product history. The frontend surfaces recall status via three touch points: a `RecallBanner` animated alert on the verify and track pages, a RECALLED badge on every `ProductCard`, and an `IssueRecallModal` on the dashboard and track page that lets the manufacturer issue or lift a recall in one click.
+
+- **Figure 14.1** — `issueRecall` and `liftRecall` Solidity functions from `hardhat-project/contracts/SupplyChain.sol`.
+- **Figure 14.2** — `RecallBanner` component from `frontend/components/RecallBanner.tsx`.
+- **Figure 14.3** — `IssueRecallModal` contract call site from `frontend/components/IssueRecallModal.tsx`.
+
+#### Feature 13 — Three-theme design system (Phase 22)
 
 *Justification opener:* "Phase 22 addresses the A+ marking criterion 'outstanding quality; complete in every way' (80–100%) by replacing the generic indigo/cyan hardcoded Tailwind classes with a CSS custom-property system. Three named themes — Nebula (violet/indigo/cyan, default), Aurora (mint/sky/violet), Obsidian (monochrome/bronze) — demonstrate that the colour architecture is correct: adding a fourth theme requires only one CSS block, not edits to every component."
 
 Prose: All components consume `--sig-1`, `--sig-2`, `--sig-3` (signature gradient stops), `--role-mfr`, `--role-dst`, `--role-ret`, and `--verified`. The `ThemeProvider` reads localStorage on mount, applies `theme-aurora` or `theme-obsidian` as a class on `<html>`, and exposes `setTheme` via React context. `AuroraBackground` renders three drifting radial-gradient blobs with a vignette and film-grain noise overlay — the visual signature of the Nebula theme.
 
-- **Figure 12.1** — `ThemeProvider`/`useTheme` from `frontend/lib/theme.tsx`.
-- **Figure 12.2** — `AuroraBackground` drifting blob animation from `frontend/components/AuroraBackground.tsx`.
-- **Figure 12.3** — `ThemeSwitcher` palette tiles from `frontend/components/ThemeSwitcher.tsx`.
-- **Figure 12.4** — CSS variable block (`:root`, `.theme-aurora`, `.theme-obsidian`) from `frontend/app/globals.css`.
+- **Figure 15.1** — `ThemeProvider`/`useTheme` from `frontend/lib/theme.tsx`.
+- **Figure 15.2** — `AuroraBackground` drifting blob animation from `frontend/components/AuroraBackground.tsx`.
+- **Figure 15.3** — `ThemeSwitcher` palette tiles from `frontend/components/ThemeSwitcher.tsx`.
+- **Figure 15.4** — CSS variable block (`:root`, `.theme-aurora`, `.theme-obsidian`) from `frontend/app/globals.css`.
 
 ### 9. Smart Contract Reference
 Carry over / re-use the existing tables (functions, events, roles, status transitions).
@@ -246,7 +268,7 @@ Carry over the existing decisions. Add four new entries:
 
 ### 12. Testing
 - **Figure 10.1** — A representative test from `hardhat-project/test/SupplyChain.test.ts`. Pick one test case that exercises access control (`onlyRole`).
-- Add a note: "29 tests pass; re-run with `cd hardhat-project && npx hardhat test`."
+- Add a note: "43 tests pass (29 original + 6 IoT + 8 Recall); re-run with `cd hardhat-project && npx hardhat test`."
 
 ### 13. Screenshots
 
@@ -256,10 +278,15 @@ Carry over the existing decisions. Add four new entries:
 - `[INSERT SCREENSHOT — Add Product, step 3 review]`
 - `[INSERT SCREENSHOT — Add Product, success screen with confetti + QR]`
 - `[INSERT SCREENSHOT — Track page with timeline + status progress bar + QR]`
+- `[INSERT SCREENSHOT — Track page with SensorChart showing temperature and humidity readings]`
+- `[INSERT SCREENSHOT — Track page with RecallBanner (red alert) visible at top]`
+- `[INSERT SCREENSHOT — IssueRecallModal open, reason textarea filled]`
 - `[INSERT SCREENSHOT — Verify page with authenticity seal]`
+- `[INSERT SCREENSHOT — Verify page with RecallBanner for a recalled product]`
 - `[INSERT SCREENSHOT — Verify page with QR scanner open, Upload tab]`
 - `[INSERT SCREENSHOT — IPFS gateway showing the actual certificate file]`
 - `[INSERT SCREENSHOT — Audit page with filters applied + donut chart]`
+- `[INSERT SCREENSHOT — IoT Simulator page, readings submitted successfully]`
 - `[INSERT SCREENSHOT — Contacts page with saved contact list and role badges]`
 - `[INSERT SCREENSHOT — Transfer Ownership modal, ContactPicker showing saved contacts tab]`
 - `[INSERT SCREENSHOT — ThemeSwitcher open, Aurora theme active, full dashboard]`
@@ -271,16 +298,19 @@ Reproduce the six references from Part 1 §8 (IBM, Institute for Supply Manageme
 
 ## Acceptance checks
 - [ ] `documentation/documentation_group13.md` opens with the Group 13 member table.
-- [ ] A Part 1 ↔ Part 2 mapping table (10 rows minimum) is present before the Executive Summary.
+- [ ] A Part 1 ↔ Part 2 mapping table (12 rows minimum) is present before the Executive Summary.
 - [ ] Figure 1 is a Mermaid diagram with four layers matching Part 1 §5.2.
 - [ ] Every Figure X.Y code block is quoted verbatim from the current source and captioned with a `*Source: ... lines A–B.*` line.
 - [ ] Every feature section opens with a justification sentence citing Part 1 or the marking rubric.
-- [ ] Feature 9 (Contacts + Transfer) and Feature 10 (Theme system) are present with figures.
+- [ ] Feature 9 (Contacts + Transfer) and Feature 13 (Theme system) are present with figures.
+- [ ] Feature 11 (IoT Sensor Simulation) is present with Figures 13.1–13.3.
+- [ ] Feature 12 (Product Recall System) is present with Figures 14.1–14.3.
 - [ ] Contacts SQL table is in the Setup Instructions section.
 - [ ] API Reference includes the four `/api/contacts` endpoints.
 - [ ] Architecture Decisions includes all four new entries (IPFS CID, URL filters, Contacts in MySQL, CSS vars).
+- [ ] Testing note states "43 tests pass".
 - [ ] All six Part 1 references appear under References.
-- [ ] Screenshots section contains the eleven placeholders.
+- [ ] Screenshots section contains at least sixteen placeholders (including IoT and Recall screens).
 
 ## STOP — request user review
 After finishing, post exactly: `Phase 19 complete — requesting review.`

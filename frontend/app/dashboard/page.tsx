@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
+import { EventFeed } from "@/components/EventFeed";
 
 export default function Dashboard() {
   const { walletState } = useWallet();
@@ -121,6 +122,9 @@ export default function Dashboard() {
         <StatTile label="Delivered"  value={stats.delivered} icon={<PackageCheck className="w-5 h-5" />} accent="sky" />
         <StatTile label="Sold"       value={stats.sold}      icon={<Coins className="w-5 h-5" />}        accent="emerald" />
       </div>
+
+      {/* Live Chain Events — Part 1 §5.2.1 audit trail */}
+      <EventFeed />
 
       {/* Search */}
       <div className="relative max-w-sm">

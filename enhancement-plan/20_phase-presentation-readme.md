@@ -83,9 +83,15 @@ Step-by-step what to click, what to say. Cover this order:
 
 9. **Transfer ownership via ContactPicker** — return to the Dashboard, open a product card and click "Transfer". The Transfer Ownership modal opens. Click the "From Contacts" tab — Distributor Co appears. Select it. Click Transfer. MetaMask prompts; approve. Say *"The smart contract has just changed the recorded owner of this product. No company controls this — it is enforced by code on the blockchain."*
 
-10. **Theme switcher** — click the palette icon in the navbar. Switch to Aurora theme — the entire application retints to mint and sky instantly. Switch to Obsidian — monochrome with bronze accents. Switch back to Nebula. Say *"Three named themes prove that every colour in this application comes from a central token system — no individual component has a hardcoded colour."*
+10. **IoT Simulator** — click "IoT Simulator" in the navbar. Enter the product ID created in step 2, set Temperature to 4°C and Humidity to 72%, click Submit. MetaMask prompts; approve. Navigate back to the Track page for that product and scroll to the sensor chart. Say *"This closes our Part 1 §5.4 promise: real sensor readings written to the blockchain and visualised live — no off-chain database involved."*
 
-*What to say out loud:* "We will walk through a full product journey: create, verify, track, audit, transfer, and theme — all in under ten minutes."
+11. **Issue a product recall** — on the Track page, click "Issue Recall". Enter a reason such as "Contamination detected in batch". Click Confirm. MetaMask prompts; approve. The red PRODUCT RECALLED banner appears at the top of the page. Navigate to the Verify page and verify the same product ID — the banner appears there too. Say *"A manufacturer can issue a recall on-chain in one click. Every page that shows this product will display the warning automatically."*
+
+12. **Lift the recall** — return to the Track page, click "Lift Recall", confirm. The banner disappears. Say *"And when the issue is resolved, the manufacturer lifts the recall with the same one-click flow. The full issue-and-lift history is permanently on the timeline."*
+
+13. **Theme switcher** — click the palette icon in the navbar. Switch to Aurora theme — the entire application retints to mint and sky instantly. Switch to Obsidian — monochrome with bronze accents. Switch back to Nebula. Say *"Three named themes prove that every colour in this application comes from a central token system — no individual component has a hardcoded colour."*
+
+*What to say out loud:* "We will walk through a full product journey: create, verify, track, audit, transfer, recall, and theme — all in under twelve minutes."
 
 ### 6. What makes this worth high marks
 
@@ -94,15 +100,17 @@ The table below maps every A+ marking criterion to a live demonstration:
 ```md
 | Marking criterion (A+, 80–100%) | Implementation evidence |
 |---|---|
-| Complete implementation of all proposed features | transferOwnership, addProduct, verifyProduct, addCertificationHash, getHistory — all with UI paths (Part 1 §5.3) |
+| Complete implementation of all proposed features | transferOwnership, addProduct, verifyProduct, addCertificationHash, getHistory, issueRecall, liftRecall, logSensorReading — all with UI paths (Part 1 §5.3) |
 | IPFS off-chain storage + on-chain CID | Certificate uploaded to IPFS; CID returned and anchored via addCertificationHash (Part 1 §4.3, §4.5) |
 | QR code for retailer / consumer verification | ProductQR.tsx generates; QRScanner.tsx upload-tab decodes without a camera (Part 1 §5.2.1) |
 | Audit dashboard with product / batch / date filters | FilterBar.tsx AND-combined, URL-synced so filters survive reload (Part 1 §5.2.1) |
 | Role-gated MetaMask authentication | onlyRole modifier on-chain; role pill and glow badge in UI (Part 1 §5.2.1) |
+| IoT sensor data logging (Part 1 §5.4) | logSensorReading on-chain; /iot-simulator page; SensorChart live chart on track page |
+| Product recall management | issueRecall/liftRecall on-chain; RecallBanner on verify and track pages; IssueRecallModal in dashboard |
 | 4-layer architecture matching Part 1 Figure 1 | Mermaid diagram in documentation_group13.md Figure 1; all four layers running in the demo |
 | Outstanding quality; professional presentation | Aurora animated background, three-theme CSS variable system, framer-motion design |
-| Complete documentation with code figures | documentation_group13.md: 12+ Figure X.Y snippets; Part 1 to Part 2 mapping table |
-| Testing | 29 passing Hardhat tests covering every role-gated function |
+| Complete documentation with code figures | documentation_group13.md: 15+ Figure X.Y snippets; Part 1 to Part 2 mapping table |
+| Testing | 43 passing Hardhat tests covering every role-gated function (29 original + 6 IoT + 8 Recall) |
 ```
 
 Additional Part 1 parity points:
@@ -113,6 +121,8 @@ Additional Part 1 parity points:
 - Four-layer architecture matching Part 1 Figure 1
 - Every feature has a code figure in the documentation pack
 - Transfer ownership surfaced as a one-click UI action, not a console command
+- IoT sensor simulation closes the Part 1 §5.4 promise explicitly
+- Product recall system surfaces safety management as a first-class UI feature
 
 *What to say out loud:* "Every promise in our Part 1 proposal is implemented, demonstrable on screen, and referenced by a figure number in the documentation."
 
@@ -124,7 +134,12 @@ A list of placeholders for the group to paste real screenshots into before submi
 - `[SCREENSHOT: Add Product step 3 review]`
 - `[SCREENSHOT: Success screen with confetti + QR]`
 - `[SCREENSHOT: Verify with QR scanner modal, Upload tab]`
+- `[SCREENSHOT: Verify page showing red RecallBanner for a recalled product]`
 - `[SCREENSHOT: Track page full timeline + status progress bar]`
+- `[SCREENSHOT: Track page SensorChart with temperature and humidity lines]`
+- `[SCREENSHOT: Track page with red RecallBanner visible at top]`
+- `[SCREENSHOT: IssueRecallModal open with reason textarea]`
+- `[SCREENSHOT: IoT Simulator page after submitting a reading]`
 - `[SCREENSHOT: IPFS gateway displaying the certificate file]`
 - `[SCREENSHOT: Audit page, filters active, donut chart]`
 - `[SCREENSHOT: Contacts page with saved contacts and role badges]`
@@ -194,13 +209,25 @@ Write each as "Q: … / A: …". All answers must be short enough to deliver in 
 - **Q:** What if two manufacturers try to register products at the same time?
   **A:** The contract assigns IDs sequentially and emits a `ProductAdded` event per registration. The frontend parses the event receipt rather than reading a counter, so concurrent submissions produce two distinct product IDs without collision.
 
+- **Q:** How does the IoT sensor data reach the blockchain?
+  **A:** The IoT simulator page calls `logSensorReading(productId, temperature, humidity, location)` on the smart contract via MetaMask. In a real deployment, a lightweight gateway process would sign and submit these transactions on behalf of the hardware device using a funded wallet.
+
+- **Q:** Is the IoT sensor data on-chain or in MySQL?
+  **A:** It is entirely on-chain. Each reading is stored in a `SensorEntry` struct array keyed by product ID. The track page fetches all readings via `getSensorReadings` using a read-only provider — no database query involved.
+
+- **Q:** Who can issue a product recall?
+  **A:** Only a wallet with the MANUFACTURER role can call `issueRecall` or `liftRecall`. The contract enforces this with the same `onlyRole` modifier used throughout — so no distributor or retailer can manipulate recall status.
+
+- **Q:** What happens to a product after a recall is lifted?
+  **A:** Both the `issueRecall` and `liftRecall` calls append an entry to the product's on-chain history timeline. The recall banner disappears from the UI, but the history permanently records that the product was recalled and when the issue was resolved.
+
 *What to say out loud:* "If you ask something we have not prepared, we will walk you through the code in real time."
 
 ### 10. Known limitations (be honest)
 
 - Runs on a local Hardhat node for the demo, not a public chain. The same contract deploys to any EVM network.
 - IPFS uses a local Kubo daemon during the demo rather than a paid pinning service. In production, a service such as Pinata or Filebase would pin files redundantly.
-- IoT sensor stream (temperature/humidity) is described in Part 1 §5.4 but was scoped out of Part 2 implementation as a future extension.
+- IoT sensor readings are submitted manually via the simulator page. In a production system, real hardware devices would POST directly to the API layer; the on-chain data model is identical.
 - The MySQL layer is required for the demo but not strictly necessary; a subgraph or pure on-chain event log could replace it in a production deployment.
 
 *What to say out loud:* "We scoped Part 2 carefully so every feature we claim is actually demonstrable on stage — not just described."
@@ -244,10 +271,13 @@ One-line definitions for every term used in the presentation:
 - [ ] `PRESENTATION.md` is at the project root.
 - [ ] Every section ends with an italics *What to say out loud: ...* line.
 - [ ] No code block in the file is longer than 5 lines.
-- [ ] The demo script has at least 10 steps (including contacts, transfer, and theme switcher).
-- [ ] Q&A section has at least 14 questions with answers.
-- [ ] Section 6 includes the marking-rubric alignment table.
+- [ ] The demo script has at least 13 steps (including IoT simulator, issue recall, lift recall, contacts, transfer, and theme switcher).
+- [ ] Q&A section has at least 19 questions with answers (including IoT and Recall Q&As).
+- [ ] Section 6 includes the marking-rubric alignment table with IoT and Recall rows.
 - [ ] Every feature claim in section 6 cites a Part 1 section or marking criterion.
+- [ ] Testing row in the marking table states "43 passing Hardhat tests".
+- [ ] Known Limitations does NOT say "IoT scoped out" — IoT is implemented.
+- [ ] Screenshots gallery contains at least 15 placeholders (including IoT and Recall screens).
 - [ ] A non-technical member can open it and deliver the demo top-to-bottom without opening VS Code.
 
 ## STOP — request user review
