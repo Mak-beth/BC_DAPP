@@ -12,11 +12,15 @@ export async function GET(req: NextRequest) {
   if (!wallet || !isHex(wallet)) {
     return NextResponse.json({ error: "wallet query param required" }, { status: 400 });
   }
-  const [rows] = await pool.query(
-    "SELECT * FROM contacts WHERE owner_wallet = ? ORDER BY name ASC",
-    [wallet.toLowerCase()]
-  );
-  return NextResponse.json({ data: rows });
+  try {
+    const [rows] = await pool.query(
+      "SELECT * FROM contacts WHERE owner_wallet = ? ORDER BY name ASC",
+      [wallet.toLowerCase()]
+    );
+    return NextResponse.json({ data: rows });
+  } catch {
+    return NextResponse.json({ data: [] });
+  }
 }
 
 export async function POST(req: NextRequest) {

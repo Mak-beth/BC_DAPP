@@ -7,27 +7,29 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const { searchParams } = new URL(req.url);
     const productIdStr = searchParams.get("product_id");
 
-    if (!productIdStr) {
-      return NextResponse.json(
-        { error: "product_id query param is required" },
-        { status: 400 }
+    if (productIdStr) {
+      const productId = parseInt(productIdStr, 10);
+      if (isNaN(productId)) {
+        return NextResponse.json(
+          { error: "Invalid product_id" },
+          { status: 400 }
+        );
+      }
+
+      const rows = await query<DbEvent>(
+        "SELECT * FROM events_log WHERE product_id = ? ORDER BY created_at ASC",
+        [productId]
       );
-    }
-
-    const productId = parseInt(productIdStr, 10);
-    if (isNaN(productId)) {
-      return NextResponse.json(
-        { error: "Invalid product_id" },
-        { status: 400 }
+      return NextResponse.json({ data: rows }, { status: 200 });
+    } else {
+      const rows = await query<DbEvent & { batch_number: string }>(
+        `SELECT e.*, p.batch_number 
+         FROM events_log e
+         LEFT JOIN products p ON e.product_id = p.id
+         ORDER BY e.created_at DESC`
       );
+      return NextResponse.json({ data: rows }, { status: 200 });
     }
-
-    const rows = await query<DbEvent>(
-      "SELECT * FROM events_log WHERE product_id = ? ORDER BY created_at ASC",
-      [productId]
-    );
-
-    return NextResponse.json({ data: rows }, { status: 200 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });

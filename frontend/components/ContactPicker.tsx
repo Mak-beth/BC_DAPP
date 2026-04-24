@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Check, Plus } from "lucide-react";
 import type { Contact, ContactRole } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -40,17 +40,31 @@ export function ContactPicker({
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"pick" | "manual">("pick");
+  const [loadError, setLoadError] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   useEffect(() => {
     if (!ownerWallet) return;
+    setLoadError(false);
     (async () => {
       try {
         const res = await fetch(`/api/contacts?wallet=${ownerWallet}`);
+        if (!res.ok) { setLoadError(true); return; }
         const json = await res.json();
         const list = (json.data ?? []) as Contact[];
         setContacts(allowRoles ? list.filter((c) => allowRoles.includes(c.role)) : list);
       } catch {
-        toast.error("Could not load contacts");
+        setLoadError(true);
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,7 +98,7 @@ export function ContactPicker({
       </div>
 
       {mode === "pick" ? (
-        <div className="relative">
+        <div className="relative" ref={wrapperRef}>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -96,13 +110,18 @@ export function ContactPicker({
                 <span className="text-gray-500 font-mono ml-2">{selected.contact_address.slice(0,6)}…{selected.contact_address.slice(-4)}</span>
               </span>
             ) : (
-              <span className="text-gray-500">{contacts.length ? "Choose a saved contact" : "No contacts yet — add one on /contacts"}</span>
+              <span className="text-gray-500">Choose a saved contact…</span>
             )}
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <ChevronDown className={cn("w-4 h-4 text-gray-500 transition-transform", open && "rotate-180")} />
           </button>
-          {open && contacts.length > 0 && (
-            <ul className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-lg border border-border-strong bg-bg-raised/95 backdrop-blur-xl shadow-md">
-              {contacts.map((c) => (
+          {open && (
+            <ul className="absolute left-0 right-0 z-[200] mt-1 max-h-64 overflow-auto rounded-lg border border-border-strong shadow-2xl"
+              style={{ background: "var(--bg-raised, #1a1a2e)" }}>
+              {loadError ? (
+                <li className="px-3 py-3 text-sm text-red-400">Could not load contacts — database may be offline</li>
+              ) : contacts.length === 0 ? (
+                <li className="px-3 py-3 text-sm text-gray-500">No saved contacts yet — visit <span className="text-violet-400">/contacts</span> to add some, or use &quot;Enter new address&quot; above</li>
+              ) : contacts.map((c) => (
                 <li key={c.id}>
                   <button
                     type="button"
