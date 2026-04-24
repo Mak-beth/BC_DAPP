@@ -6,6 +6,8 @@ Rewrite `documentation/documentation_group13.md` into a marker-facing report: a 
 ## Files in scope (ALLOWED to create/edit)
 - `documentation/documentation_group13.md` (rewrite)
 
+> **Format note:** The output file MUST be `.md` (Markdown). Do NOT produce a Word document (.docx). The file is rendered in GitHub and submitted as-is.
+
 ## Files OUT of scope
 - Everything else. This is a docs-only phase.
 
@@ -123,6 +125,17 @@ Copy the existing setup section in full. Add:
 
 **IPFS step** (`ipfs init` + `ipfs daemon`), added by Phase 15.
 
+**Users database table** — stores company name and role per wallet:
+```sql
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  wallet_address VARCHAR(42) NOT NULL UNIQUE,
+  role VARCHAR(20) NOT NULL,
+  company_name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
 **Contacts database table** — run after `CREATE DATABASE supplychain;`:
 ```sql
 CREATE TABLE IF NOT EXISTS contacts (
@@ -156,10 +169,11 @@ For each feature below, include: a short prose description (2–4 sentences) plu
 
 #### Feature 2 — Wallet + Role Registration
 
-*Justification opener:* "This feature implements the MetaMask role-gated authentication described in Part 1 §5.2.1 by reading the connected wallet's role from the smart contract on every page load and passing it through React context so every component can gate writes without redundant RPC calls."
+*Justification opener:* "This feature implements the MetaMask role-gated authentication described in Part 1 §5.2.1 by reading the connected wallet's role from the smart contract on every page load and passing it through React context so every component can gate writes without redundant RPC calls. Company name is collected at registration, stored in MySQL, and displayed as the dashboard heading so the examiner can see the full identity of each role participant."
 
 - **Figure 3.1** — `connectWallet` helper from `frontend/lib/contract.ts`.
 - **Figure 3.2** — Role-aware nav rendering from `frontend/components/Navbar.tsx`.
+- **Figure 3.3** — `WalletConnect` registration form (company name + role) from `frontend/components/WalletConnect.tsx`.
 
 #### Feature 3 — Transfer Ownership + Status Update
 

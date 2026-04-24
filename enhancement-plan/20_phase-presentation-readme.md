@@ -6,6 +6,8 @@ Produce a single plain-English file at the project root — `PRESENTATION.md` �
 ## Files in scope (ALLOWED to create/edit)
 - `PRESENTATION.md` (new, at project root)
 
+> **Format note:** The output file MUST be `.md` (Markdown). Do NOT produce a Word document (.docx).
+
 ## Files OUT of scope
 - Everything else. This is a writing-only phase.
 
@@ -65,7 +67,7 @@ Explain in plain English: we built a decentralised web app where every product's
 
 Step-by-step what to click, what to say. Cover this order:
 
-1. **Open the dashboard** — point out the stat tiles, the role badge, the theme. Say *"This is a manufacturer's dashboard. The role badge tells us what this wallet is allowed to do on the blockchain."*
+1. **Open the dashboard** — point out the company name heading, the stat tiles, the role badge, the theme. Say *"This is the manufacturer's dashboard. The company name at the top comes from the registration step — the role badge tells us what this wallet is allowed to do on the blockchain."*
 
 2. **Add Product wizard** — walk through step 1 (fill in details), step 2 (drop a certificate PDF), step 3 (review). Click Submit. While MetaMask pops up, say *"The browser is asking MetaMask to sign a transaction. Until I approve it here, nothing is written to the blockchain."* After confetti: *"The product is now registered on-chain. This QR code links to its public verification page."*
 
