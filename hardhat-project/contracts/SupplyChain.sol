@@ -33,6 +33,24 @@ contract SupplyChain {
     mapping(uint256 => HistoryEntry[]) private history;
     mapping(uint256 => CertificationEntry[]) private certifications;
 
+    struct SensorEntry {
+        int256 temperature; // stored in tenths of °C (e.g. 245 = 24.5 °C)
+        uint256 humidity;   // 0–100 (percentage)
+        uint256 timestamp;
+        address logger;
+    }
+
+    mapping(uint256 => SensorEntry[]) private sensorReadings;
+
+    struct RecallEntry {
+        bool    active;
+        string  reason;
+        address issuedBy;
+        uint256 timestamp;
+    }
+
+    mapping(uint256 => RecallEntry) public recalls;
+
     uint256 private productCounter;
     address public immutable admin;
 
@@ -41,6 +59,15 @@ contract SupplyChain {
     event OwnershipTransferred(uint256 indexed id, address from, address to);
     event StatusUpdated(uint256 indexed id, Status status);
     event CertificationAdded(uint256 indexed productId, string cid, address indexed uploader);
+    event SensorReading(
+        uint256 indexed productId,
+        int256  temperature,
+        uint256 humidity,
+        uint256 timestamp,
+        address indexed logger
+    );
+    event ProductRecalled(uint256 indexed productId, string reason, address indexed issuedBy);
+    event RecallLifted(uint256 indexed productId, address indexed liftedBy);
 
     modifier onlyRole(Role role) {
         require(roles[msg.sender] == role, "SupplyChain: Unauthorized role");
@@ -179,5 +206,83 @@ contract SupplyChain {
 
     function getCertifications(uint256 id) external view productExists(id) returns (CertificationEntry[] memory) {
         return certifications[id];
+    }
+
+    function logSensorReading(
+        uint256 productId,
+        int256  temperature,
+        uint256 humidity
+    ) external productExists(productId) {
+        require(roles[msg.sender] != Role.NONE, "SupplyChain: Unauthorized");
+        require(humidity <= 100, "SupplyChain: Invalid humidity");
+
+        sensorReadings[productId].push(SensorEntry({
+            temperature: temperature,
+            humidity:    humidity,
+            timestamp:   block.timestamp,
+            logger:      msg.sender
+        }));
+
+        emit SensorReading(productId, temperature, humidity, block.timestamp, msg.sender);
+    }
+
+    function getSensorReadings(uint256 id)
+        external
+        view
+        productExists(id)
+        returns (SensorEntry[] memory)
+    {
+        return sensorReadings[id];
+    }
+
+    function issueRecall(uint256 productId, string memory reason)
+        external
+        productExists(productId)
+        onlyRole(Role.MANUFACTURER)
+    {
+        require(bytes(reason).length > 0, "SupplyChain: Reason required");
+        require(!recalls[productId].active, "SupplyChain: Already recalled");
+
+        recalls[productId] = RecallEntry({
+            active:    true,
+            reason:    reason,
+            issuedBy:  msg.sender,
+            timestamp: block.timestamp
+        });
+
+        history[productId].push(HistoryEntry({
+            actor:     msg.sender,
+            action:    "Product Recalled",
+            timestamp: block.timestamp
+        }));
+
+        emit ProductRecalled(productId, reason, msg.sender);
+    }
+
+    function liftRecall(uint256 productId)
+        external
+        productExists(productId)
+        onlyRole(Role.MANUFACTURER)
+    {
+        require(recalls[productId].active, "SupplyChain: Not recalled");
+
+        recalls[productId].active = false;
+
+        history[productId].push(HistoryEntry({
+            actor:     msg.sender,
+            action:    "Recall Lifted",
+            timestamp: block.timestamp
+        }));
+
+        emit RecallLifted(productId, msg.sender);
+    }
+
+    function getRecall(uint256 id)
+        external
+        view
+        productExists(id)
+        returns (RecallEntry memory)
+    {
+        return recalls[id];
     }
 }

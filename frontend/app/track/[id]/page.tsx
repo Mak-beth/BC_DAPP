@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getContract, statusIndexToString } from "@/lib/contract";
-import type { ProductStatus } from "@/lib/types";
+import type { ProductStatus, RecallEntry } from "@/lib/types";
+import { RecallBanner } from "@/components/RecallBanner";
+import { IssueRecallModal } from "@/components/IssueRecallModal";
 import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/ui/Toast";
 import { useWallet } from "@/lib/WalletContext";
@@ -14,8 +16,10 @@ import { StatusProgressBar } from "./_components/StatusProgressBar";
 import { HistoryTimeline, type HistoryEntry } from "./_components/HistoryTimeline";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ProductQR } from "@/components/ProductQR";
-import { FileText, ExternalLink } from "lucide-react";
+import { FileText, ExternalLink, Activity } from "lucide-react";
 import { gatewayUrl, publicGatewayUrl } from "@/lib/ipfs";
+import { SensorChart } from "./_components/SensorChart";
+import type { SensorEntry } from "@/lib/types";
 
 
 interface ProductView {
@@ -36,9 +40,12 @@ export default function TrackPage() {
   const [product, setProduct] = useState<ProductView | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [certification, setCertification] = useState<{ cid: string; fileName: string } | null>(null);
+  const [sensorReadings, setSensorReadings] = useState<SensorEntry[]>([]);
+  const [recall, setRecall] = useState<RecallEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [transferOpen, setTransferOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
+  const [recallOpen, setRecallOpen] = useState(false);
 
   const isOwner = walletState.address?.toLowerCase() === product?.currentOwner.toLowerCase();
 
@@ -63,6 +70,26 @@ export default function TrackPage() {
         if (certs && certs.length > 0) {
           setCertification({ cid: certs[0].cid, fileName: certs[0].fileName });
         }
+        try {
+          const rawSensors = await contract.getSensorReadings(id);
+          setSensorReadings(
+            rawSensors.map((r: any) => ({
+              temperature: Number(r.temperature),
+              humidity:    Number(r.humidity),
+              timestamp:   Number(r.timestamp),
+              logger:      r.logger,
+            }))
+          );
+        } catch { /* product may have no readings */ }
+        try {
+          const recallRaw = await contract.getRecall(id);
+          setRecall({
+            active:    recallRaw.active,
+            reason:    recallRaw.reason,
+            issuedBy:  recallRaw.issuedBy,
+            timestamp: Number(recallRaw.timestamp),
+          });
+        } catch { /* recall not available */ }
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to load product");
       } finally {
@@ -90,6 +117,7 @@ export default function TrackPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
+      {recall?.active && <RecallBanner recall={recall} />}
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Product #{product.id}</p>
@@ -98,12 +126,19 @@ export default function TrackPage() {
         </div>
         <div className="flex items-start gap-4">
           <StatusBadge status={product.status} />
-          {isOwner && (
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => setTransferOpen(true)}>Transfer</Button>
-              <Button size="sm" variant="secondary" onClick={() => setStatusOpen(true)}>Update status</Button>
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {isOwner && (
+              <>
+                <Button size="sm" onClick={() => setTransferOpen(true)}>Transfer</Button>
+                <Button size="sm" variant="secondary" onClick={() => setStatusOpen(true)}>Update status</Button>
+              </>
+            )}
+            {walletState.role === "MANUFACTURER" && (
+              <Button size="sm" variant="danger" onClick={() => setRecallOpen(true)}>
+                {recall?.active ? "Lift Recall" : "Issue Recall"}
+              </Button>
+            )}
+          </div>
           <div className="hidden md:block">
             <ProductQR productId={product.id} size={140} />
           </div>
@@ -151,11 +186,37 @@ export default function TrackPage() {
         <HistoryTimeline entries={history} />
       </section>
 
+      {/* Sensor Readings — Part 1 §5.4 */}
+      <div className="glass-card rounded-xl p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Activity className="w-4 h-4" style={{ color: "var(--sig-1)" }} />
+          <span className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+            Sensor Readings
+          </span>
+        </div>
+        {sensorReadings.length === 0 ? (
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            No sensor data recorded for this product yet.
+          </p>
+        ) : (
+          <SensorChart readings={sensorReadings} />
+        )}
+      </div>
+
       {isOwner && product && (
         <>
           <TransferOwnershipModal open={transferOpen} onClose={() => setTransferOpen(false)} productId={product.id} suggestedRole="DISTRIBUTOR" onSuccess={() => load()} />
           <UpdateStatusModal open={statusOpen} onClose={() => setStatusOpen(false)} productId={product.id} current={product.status} onSuccess={() => load()} />
         </>
+      )}
+      {walletState.role === "MANUFACTURER" && product && (
+        <IssueRecallModal
+          productId={product.id}
+          isRecalled={!!recall?.active}
+          open={recallOpen}
+          onClose={() => setRecallOpen(false)}
+          onSuccess={load}
+        />
       )}
     </div>
   );

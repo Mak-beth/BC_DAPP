@@ -247,4 +247,117 @@ describe("SupplyChain", function () {
       expect(await supplyChain.getTotalProducts()).to.equal(2);
     });
   });
+
+  describe("8. Product Recall", function () {
+    beforeEach(async function () {
+      await supplyChain.connect(manufacturer).addProduct("Widget", "CN", "BATCH-A");
+    });
+
+    it("manufacturer can issue a recall", async function () {
+      await expect(
+        supplyChain.connect(manufacturer).issueRecall(1, "Contamination detected")
+      )
+        .to.emit(supplyChain, "ProductRecalled")
+        .withArgs(1, "Contamination detected", manufacturer.address);
+      const recall = await supplyChain.getRecall(1);
+      expect(recall.active).to.be.true;
+      expect(recall.reason).to.equal("Contamination detected");
+    });
+
+    it("non-manufacturer cannot issue recall", async function () {
+      await expect(
+        supplyChain.connect(distributor).issueRecall(1, "Faulty batch")
+      ).to.be.revertedWith("SupplyChain: Unauthorized role");
+    });
+
+    it("reverts when reason is empty", async function () {
+      await expect(
+        supplyChain.connect(manufacturer).issueRecall(1, "")
+      ).to.be.revertedWith("SupplyChain: Reason required");
+    });
+
+    it("reverts when product already recalled", async function () {
+      await supplyChain.connect(manufacturer).issueRecall(1, "First recall");
+      await expect(
+        supplyChain.connect(manufacturer).issueRecall(1, "Second recall")
+      ).to.be.revertedWith("SupplyChain: Already recalled");
+    });
+
+    it("manufacturer can lift a recall", async function () {
+      await supplyChain.connect(manufacturer).issueRecall(1, "Safety check");
+      await expect(
+        supplyChain.connect(manufacturer).liftRecall(1)
+      ).to.emit(supplyChain, "RecallLifted");
+      const recall = await supplyChain.getRecall(1);
+      expect(recall.active).to.be.false;
+    });
+
+    it("reverts liftRecall when product is not recalled", async function () {
+      await expect(
+        supplyChain.connect(manufacturer).liftRecall(1)
+      ).to.be.revertedWith("SupplyChain: Not recalled");
+    });
+
+    it("getRecall reflects active=false after lift", async function () {
+      await supplyChain.connect(manufacturer).issueRecall(1, "Defect");
+      await supplyChain.connect(manufacturer).liftRecall(1);
+      const recall = await supplyChain.getRecall(1);
+      expect(recall.active).to.be.false;
+      expect(recall.reason).to.equal("Defect");
+    });
+
+    it("getRecall reverts for non-existent product", async function () {
+      await expect(supplyChain.getRecall(999)).to.be.revertedWith(
+        "Product does not exist"
+      );
+    });
+  });
+
+  describe("9. IoT Sensor Readings", function () {
+    beforeEach(async function () {
+      // manufacturer adds product once; id = 1
+      await supplyChain.connect(manufacturer).addProduct("P", "Origin", "B1");
+    });
+
+    it("manufacturer can log a sensor reading", async function () {
+      await expect(
+        supplyChain.connect(manufacturer).logSensorReading(1, 245, 72)
+      ).to.emit(supplyChain, "SensorReading");
+    });
+
+    it("address with NONE role cannot log", async function () {
+      const signers = await ethers.getSigners();
+      const noRole = signers[5];
+      await expect(
+        supplyChain.connect(noRole).logSensorReading(1, 100, 50)
+      ).to.be.revertedWith("SupplyChain: Unauthorized");
+    });
+
+    it("rejects humidity > 100", async function () {
+      await expect(
+        supplyChain.connect(manufacturer).logSensorReading(1, 200, 101)
+      ).to.be.revertedWith("SupplyChain: Invalid humidity");
+    });
+
+    it("rejects non-existent product", async function () {
+      await expect(
+        supplyChain.connect(manufacturer).logSensorReading(999, 200, 50)
+      ).to.be.revertedWith("Product does not exist");
+    });
+
+    it("getSensorReadings returns entries in order", async function () {
+      await supplyChain.connect(manufacturer).logSensorReading(1, 200, 60);
+      await supplyChain.connect(manufacturer).logSensorReading(1, 210, 65);
+      const readings = await supplyChain.getSensorReadings(1);
+      expect(readings.length).to.equal(2);
+      expect(Number(readings[0].temperature)).to.equal(200);
+      expect(Number(readings[1].temperature)).to.equal(210);
+    });
+
+    it("getSensorReadings reverts for non-existent product", async function () {
+      await expect(supplyChain.getSensorReadings(999)).to.be.revertedWith(
+        "Product does not exist"
+      );
+    });
+  });
 });

@@ -10,11 +10,12 @@ import WalletConnect from "./WalletConnect";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const links = [
-  { href: "/dashboard",   label: "Dashboard",   role: "any" as const },
-  { href: "/add-product", label: "Add Product", role: "MANUFACTURER" as const },
-  { href: "/verify",      label: "Verify",      role: "any" as const },
-  { href: "/contacts",    label: "Contacts",    role: "any" as const },
-  { href: "/audit",       label: "Audit",       role: "any" as const },
+  { href: "/dashboard",     label: "Dashboard",     role: "any" as const },
+  { href: "/add-product",   label: "Add Product",   role: "MANUFACTURER" as const },
+  { href: "/verify",        label: "Verify",        role: "any" as const },
+  { href: "/contacts",      label: "Contacts",      role: "any" as const },
+  { href: "/audit",         label: "Audit",         role: "any" as const },
+  { href: "/iot-simulator", label: "IoT Simulator", role: "requires_role" as const },
 ];
 
 export default function Navbar() {
@@ -22,9 +23,11 @@ export default function Navbar() {
   const { walletState } = useWallet();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const visibleLinks = links.filter(
-    (l) => l.role === "any" || walletState.role === l.role
-  );
+  const visibleLinks = links.filter((l) => {
+    if (l.role === "any") return true;
+    if (l.role === "requires_role") return walletState.isConnected && walletState.role !== "NONE";
+    return walletState.role === l.role;
+  });
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border-subtle bg-bg-base/60 backdrop-blur-xl">

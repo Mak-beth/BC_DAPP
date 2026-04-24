@@ -18,9 +18,13 @@ interface ProductCardProps {
   /** Role of the current wallet — drives which role is pre-selected when saving a new contact. */
   userRole?: ContactRole;
   onChanged?: () => void;
+  /** Whether this product has an active on-chain recall. */
+  isRecalled?: boolean;
+  /** Called when the MANUFACTURER clicks the Recall button on this card. */
+  onRecall?: () => void;
 }
 
-export default function ProductCard({ product, status, canAct, userRole, onChanged }: ProductCardProps) {
+export default function ProductCard({ product, status, canAct, userRole, onChanged, isRecalled, onRecall }: ProductCardProps) {
   const [transferOpen, setTransferOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
 
@@ -39,7 +43,15 @@ export default function ProductCard({ product, status, canAct, userRole, onChang
       <div className="h-full rounded-[11px] bg-bg-raised/90 backdrop-blur-xl border border-border-subtle p-5 flex flex-col gap-3">
         <div className="flex justify-between items-start gap-2">
           <h2 className="text-lg font-bold text-white leading-tight">{product.name}</h2>
-          {status && <StatusBadge status={status} />}
+          <div className="flex flex-col items-end gap-1">
+            {status && <StatusBadge status={status} />}
+            {isRecalled && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444" }}>
+                RECALLED
+              </span>
+            )}
+          </div>
         </div>
         <div className="space-y-1 text-sm text-gray-400 flex-1">
           <p><span className="text-gray-500">Batch:</span> <span className="font-mono text-gray-300">{product.batch_number || "N/A"}</span></p>
@@ -55,6 +67,11 @@ export default function ProductCard({ product, status, canAct, userRole, onChang
               <Button size="sm" icon={<Send className="w-4 h-4" />} onClick={() => setTransferOpen(true)}>Transfer</Button>
               <Button size="sm" variant="ghost" icon={<ArrowRightCircle className="w-4 h-4" />} onClick={() => setStatusOpen(true)}>Status</Button>
             </>
+          )}
+          {onRecall && (
+            <Button size="sm" variant="danger" onClick={onRecall}>
+              {isRecalled ? "Lift Recall" : "Recall"}
+            </Button>
           )}
         </div>
       </div>

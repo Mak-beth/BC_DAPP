@@ -38,6 +38,20 @@ export interface CertificationEntry {
   uploader: string;
 }
 
+export interface SensorEntry {
+  temperature: number; // stored ×10; display as (value / 10).toFixed(1)
+  humidity: number;
+  timestamp: number;
+  logger: string;
+}
+
+export interface RecallEntry {
+  active: boolean;
+  reason: string;
+  issuedBy: string;
+  timestamp: number;
+}
+
 export interface DbUser {
   wallet_address: string;
   role: UserRole;

@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { getContract, statusIndexToString } from "@/lib/contract";
-import type { DbProduct, ProductStatus } from "@/lib/types";
+import type { DbProduct, ProductStatus, RecallEntry } from "@/lib/types";
+import { RecallBanner } from "@/components/RecallBanner";
 import StatusBadge from "@/components/StatusBadge";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -29,6 +30,7 @@ export default function VerifyPage() {
   const toast = useToast();
   const [productId, setProductId] = useState("");
   const [result, setResult] = useState<VerifyData | null>(null);
+  const [recall, setRecall] = useState<RecallEntry | null>(null);
   const [loading, setLoading] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
 
@@ -66,6 +68,7 @@ export default function VerifyPage() {
     }
     setLoading(true);
     setResult(null);
+    setRecall(null);
     try {
       const contract = await getContract(false);
       const [exists, currentOwner, statusIndex] = await contract.verifyProduct(id);
@@ -82,6 +85,15 @@ export default function VerifyPage() {
         }
       } catch {}
       setResult({ exists, currentOwner, status: statusIndexToString(statusIndex), dbProduct, certification });
+      try {
+        const recallRaw = await contract.getRecall(id);
+        setRecall({
+          active:    recallRaw.active,
+          reason:    recallRaw.reason,
+          issuedBy:  recallRaw.issuedBy,
+          timestamp: Number(recallRaw.timestamp),
+        });
+      } catch { /* recall not available */ }
     } catch {
       toast.error("Product not found on the blockchain.");
     } finally {
@@ -128,6 +140,7 @@ export default function VerifyPage() {
             transition={{ type: "spring", stiffness: 200, damping: 24 }}
             className="rounded-2xl border border-border-subtle bg-bg-raised/60 backdrop-blur-xl p-6 space-y-5"
           >
+            {recall?.active && <RecallBanner recall={recall} />}
             <AuthenticitySeal />
             <div className="text-center">
               <h2 className="text-xl font-bold text-white">

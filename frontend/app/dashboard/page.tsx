@@ -7,6 +7,7 @@ import { Boxes, Truck, PackageCheck, Coins, Search } from "lucide-react";
 import { useWallet } from "@/lib/WalletContext";
 import { getContract, statusIndexToString } from "@/lib/contract";
 import type { Product, DbProduct, ContactRole } from "@/lib/types";
+import { IssueRecallModal } from "@/components/IssueRecallModal";
 import ProductCard from "@/components/ProductCard";
 import { ProductCardSkeleton } from "@/components/ProductCardSkeleton";
 import { StatTile } from "@/components/StatTile";
@@ -20,6 +21,8 @@ export default function Dashboard() {
   const { walletState } = useWallet();
   const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
+  const [recallMap, setRecallMap] = useState<Record<number, boolean>>({});
+  const [recallOpen, setRecallOpen] = useState<number | null>(null);
   const [loading, setLoading]   = useState(false);
   const [query, setQuery]       = useState("");
 
@@ -44,6 +47,15 @@ export default function Dashboard() {
           createdAt: Number(p.createdAt),
         }));
       setProducts(owned);
+      const recallResults = await Promise.all(
+        owned.map(async (p) => {
+          try {
+            const r = await contract.getRecall(p.id);
+            return [p.id, r.active] as [number, boolean];
+          } catch { return [p.id, false] as [number, boolean]; }
+        })
+      );
+      setRecallMap(Object.fromEntries(recallResults));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load products");
     } finally {
@@ -160,9 +172,21 @@ export default function Dashboard() {
               canAct={true}
               userRole={walletState.role === "NONE" ? undefined : (walletState.role as ContactRole)}
               onChanged={() => { fetchOwnedProducts(); }}
+              isRecalled={!!recallMap[p.id]}
+              onRecall={walletState.role === "MANUFACTURER" ? () => setRecallOpen(p.id) : undefined}
             />
           ))}
         </motion.div>
+      )}
+
+      {recallOpen !== null && (
+        <IssueRecallModal
+          productId={recallOpen}
+          isRecalled={!!recallMap[recallOpen]}
+          open={true}
+          onClose={() => setRecallOpen(null)}
+          onSuccess={fetchOwnedProducts}
+        />
       )}
     </div>
   );

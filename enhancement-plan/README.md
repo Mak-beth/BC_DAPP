@@ -30,6 +30,38 @@ To interact with the local blockchain, you need a crypto wallet:
 
 ---
 
+## 🚀 User Guide: Navigating Roles & Wallets
+
+The Supply Chain DApp uses **Role-Based Access Control (RBAC)**. Your interface and available actions change depending on which MetaMask account you have selected.
+
+### 1. The "Big Three" Test Accounts
+To fully test the system, import these three accounts into MetaMask from your `npx hardhat node` terminal output:
+
+| Account Index | Default Role | Actions You Can Perform |
+| :--- | :--- | :--- |
+| **Account #0** | **MANUFACTURER** | Create products, add certifications, transfer to Distributor. |
+| **Account #1** | **DISTRIBUTOR** | Receive products, update status to "In Transit", transfer to Retailer. |
+| **Account #2** | **RETAILER** | Receive products, update status to "Delivered" or "Sold". |
+| **Account #3+** | **NONE** | View-only access. Can verify products but cannot perform actions. |
+
+### 2. How to Switch Roles
+1.  Open **MetaMask**.
+2.  Click the circular account icon at the top right.
+3.  Select the account you want to use (e.g., Account #1 for Distributor).
+4.  The DApp will automatically detect the change. The "Role" badge in the Navbar will update, and different buttons (like "Add Product" or "Transfer") will appear/disappear.
+
+### 3. Role-Specific Workflow
+*   **Manufacturer:** Go to the "Add Product" page to mint a new item on the blockchain.
+*   **Distributor/Retailer:** Go to the "Dashboard" or "Contacts" to see items you own or are transferring to you.
+*   **Public/Customer:** Use the "Verify" page to scan a QR code and check the product's authenticity without needing a role.
+
+### 4. Troubleshooting
+*   **"Wrong Network" Banner:** Ensure MetaMask is set to **Hardhat Local** (Chain ID 31337).
+*   **Transaction "Nonce" Errors:** If you restart your hardhat node, MetaMask might get confused. Go to *Settings > Advanced > Clear activity tab data* in MetaMask to reset it.
+*   **Buttons not appearing:** Ensure you have the correct role and are the **current owner** of the product you are trying to modify.
+
+---
+
 ## How to use this folder
 
 1. Open `01_phase-foundation.md`. Copy its **entire contents** and paste it into the AI coder as the sole instruction.
@@ -69,10 +101,15 @@ To interact with the local blockchain, you need a crypto wallet:
 | 20 | `20_phase-presentation-readme.md` | Plain-language `PRESENTATION.md` for demo | |
 | 21 | `21_phase-contacts-and-transfer.md` | Address book (contacts CRUD) + Transfer Ownership / Update Status actions | |
 | 22 | `22_phase-theme-overhaul.md` | Distinctive palette, aurora background, theme switcher (Nebula / Aurora / Obsidian), role-tinted surfaces | |
+| 23 | `23_phase-iot-simulation.md` | **IoT sensor simulation** — `logSensorReading` on-chain, sparkline chart on track page | ✅ |
+| 24 | `24_phase-recall-system.md` | **Product Recall System** — `issueRecall`/`liftRecall` on-chain, red banner on verify + track | ✅ |
+| 25 | `25_phase-event-feed.md` | Live blockchain event feed on dashboard — real-time ethers event listeners | |
 
 Phases 15, 16, 17 are marked "proposal parity" — they exist because Part 1 promised these features. Do not skip them.
 
 Phases 21 and 22 were added after an initial review — 21 makes transfer-ownership usable in one click, 22 replaces the generic indigo/cyan defaults with a designed colour system.
+
+Phases 23, 24, 25 were added to maximise marks — 23 closes the Part 1 §5.4 IoT promise, 24 adds on-chain governance (recall system), 25 makes the blockchain visibly live during the demo. Phases 23 and 24 modify the contract — redeploy after each.
 
 ---
 
