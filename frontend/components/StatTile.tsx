@@ -11,12 +11,12 @@ interface StatTileProps {
   accent?: "indigo" | "amber" | "sky" | "emerald";
 }
 
-const accentMap: Record<NonNullable<StatTileProps["accent"]>, string> = {
-  indigo:  "from-indigo-500/30 to-indigo-500/5 text-indigo-300",
-  amber:   "from-amber-500/30 to-amber-500/5 text-amber-300",
-  sky:     "from-sky-500/30 to-sky-500/5 text-sky-300",
-  emerald: "from-emerald-500/30 to-emerald-500/5 text-emerald-300",
-};
+const accentMap = {
+  indigo:  { bg: "var(--sig-1)",    text: "var(--sig-1)" },
+  amber:   { bg: "var(--role-mfr)", text: "var(--role-mfr)" },
+  sky:     { bg: "var(--sig-3)",    text: "var(--sig-3)" },
+  emerald: { bg: "var(--role-ret)", text: "var(--role-ret)" },
+} as const;
 
 export function StatTile({ label, value, icon, accent = "indigo" }: StatTileProps) {
   return (
@@ -26,9 +26,19 @@ export function StatTile({ label, value, icon, accent = "indigo" }: StatTileProp
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
       className="relative overflow-hidden rounded-xl border border-border-subtle bg-bg-raised/60 backdrop-blur-xl p-4"
     >
-      <div className={cn("absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl bg-gradient-to-br opacity-60", accentMap[accent])} />
+      <div
+        className="absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl opacity-60"
+        style={{ background: `radial-gradient(closest-side, color-mix(in srgb, ${accentMap[accent].bg} 40%, transparent), transparent 70%)` }}
+      />
       <div className="relative flex items-center gap-3">
-        {icon && <div className={cn("grid place-items-center w-10 h-10 rounded-lg bg-gradient-to-br", accentMap[accent])}>{icon}</div>}
+        {icon && (
+          <div
+            className="grid place-items-center w-10 h-10 rounded-lg"
+            style={{ background: `color-mix(in srgb, ${accentMap[accent].bg} 18%, transparent)`, color: accentMap[accent].text }}
+          >
+            {icon}
+          </div>
+        )}
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-400">{label}</p>
           <p className="text-2xl font-bold text-white">{value}</p>

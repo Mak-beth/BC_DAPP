@@ -10,11 +10,13 @@ export function AuthenticitySeal() {
       transition={{ type: "spring", stiffness: 180, damping: 14 }}
       className="relative grid place-items-center w-24 h-24 mx-auto"
     >
-      <span className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-400/30 to-sky-400/30 blur-xl" />
-      <span className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-400/60 to-sky-500/60 p-[2px]">
+      <span className="absolute inset-0 rounded-full blur-xl"
+        style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--verified) 40%, transparent) 0%, transparent 70%)" }} />
+      <span className="absolute inset-0 rounded-full p-[2px]"
+        style={{ background: "linear-gradient(135deg, var(--verified), var(--sig-3))" }}>
         <span className="block w-full h-full rounded-full bg-bg-raised" />
       </span>
-      <ShieldCheck className="relative w-10 h-10 text-emerald-300" />
+      <ShieldCheck className="relative w-10 h-10" style={{ color: "var(--verified)" }} />
     </motion.div>
   );
 }

@@ -6,6 +6,10 @@ import { getContract, statusIndexToString } from "@/lib/contract";
 import type { ProductStatus } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/ui/Toast";
+import { useWallet } from "@/lib/WalletContext";
+import { TransferOwnershipModal } from "@/components/TransferOwnershipModal";
+import { UpdateStatusModal } from "@/components/UpdateStatusModal";
+import { Button } from "@/components/ui/Button";
 import { StatusProgressBar } from "./_components/StatusProgressBar";
 import { HistoryTimeline, type HistoryEntry } from "./_components/HistoryTimeline";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -28,15 +32,19 @@ export default function TrackPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
   const toast = useToast();
+  const { walletState } = useWallet();
   const [product, setProduct] = useState<ProductView | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [certification, setCertification] = useState<{ cid: string; fileName: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const contract = await getContract(false);
+  const isOwner = walletState.address?.toLowerCase() === product?.currentOwner.toLowerCase();
+
+  async function load() {
+    try {
+      const contract = await getContract(false);
         const p = await contract.getProduct(id);
         const h = await contract.getHistory(id);
         setProduct({
@@ -60,7 +68,9 @@ export default function TrackPage() {
       } finally {
         setLoading(false);
       }
-    }
+  }
+
+  useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -88,6 +98,12 @@ export default function TrackPage() {
         </div>
         <div className="flex items-start gap-4">
           <StatusBadge status={product.status} />
+          {isOwner && (
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => setTransferOpen(true)}>Transfer</Button>
+              <Button size="sm" variant="secondary" onClick={() => setStatusOpen(true)}>Update status</Button>
+            </div>
+          )}
           <div className="hidden md:block">
             <ProductQR productId={product.id} size={140} />
           </div>
@@ -134,6 +150,13 @@ export default function TrackPage() {
         <h2 className="text-sm uppercase tracking-wide text-gray-400 mb-3">History</h2>
         <HistoryTimeline entries={history} />
       </section>
+
+      {isOwner && product && (
+        <>
+          <TransferOwnershipModal open={transferOpen} onClose={() => setTransferOpen(false)} productId={product.id} suggestedRole="DISTRIBUTOR" onSuccess={() => load()} />
+          <UpdateStatusModal open={statusOpen} onClose={() => setStatusOpen(false)} productId={product.id} current={product.status} onSuccess={() => load()} />
+        </>
+      )}
     </div>
   );
 }

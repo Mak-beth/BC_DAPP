@@ -2,6 +2,19 @@ export type ProductStatus = "CREATED" | "IN_TRANSIT" | "DELIVERED" | "SOLD";
 
 export type UserRole = "NONE" | "MANUFACTURER" | "DISTRIBUTOR" | "RETAILER";
 
+export type ContactRole = "MANUFACTURER" | "DISTRIBUTOR" | "RETAILER";
+
+export interface Contact {
+  id: number;
+  owner_wallet: string;
+  contact_address: string;
+  name: string;
+  role: ContactRole;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Product {
   id: number;
   name: string;

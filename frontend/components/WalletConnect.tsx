@@ -170,10 +170,10 @@ export default function WalletConnect() {
   };
 
   const roleGlow: Record<UserRole, string> = {
-    NONE:         "bg-gray-500/15 text-gray-300 border border-gray-500/30",
-    MANUFACTURER: "bg-indigo-500/15 text-indigo-200 border border-indigo-400/40 shadow-[0_0_16px_rgba(99,102,241,0.35)]",
-    DISTRIBUTOR:  "bg-amber-500/15 text-amber-200 border border-amber-400/40 shadow-[0_0_16px_rgba(245,158,11,0.35)]",
-    RETAILER:     "bg-emerald-500/15 text-emerald-200 border border-emerald-400/40 shadow-[0_0_16px_rgba(16,185,129,0.35)]",
+    NONE:         "bg-white/5 text-content-muted border border-border-subtle",
+    MANUFACTURER: "bg-[color:var(--role-mfr)]/15 text-[color:var(--role-mfr)] border border-[color:var(--role-mfr)]/40 shadow-[0_0_18px_color-mix(in_srgb,var(--role-mfr)_30%,transparent)]",
+    DISTRIBUTOR:  "bg-[color:var(--role-dst)]/15 text-[color:var(--role-dst)] border border-[color:var(--role-dst)]/40 shadow-[0_0_18px_color-mix(in_srgb,var(--role-dst)_30%,transparent)]",
+    RETAILER:     "bg-[color:var(--role-ret)]/15 text-[color:var(--role-ret)] border border-[color:var(--role-ret)]/40 shadow-[0_0_18px_color-mix(in_srgb,var(--role-ret)_30%,transparent)]",
   };
 
   if (walletState.isConnected && walletState.address) {

@@ -10,7 +10,7 @@ type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-gradient-to-br from-indigo-500 to-cyan-500 text-white hover:shadow-glow border border-indigo-400/40",
+    "bg-gradient-sig text-white hover:shadow-sig border border-white/10",
   secondary:
     "bg-white/[0.04] text-gray-100 border border-border-subtle hover:bg-white/[0.08] hover:border-border-strong",
   ghost:
@@ -45,7 +45,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={disabled || loading}
       className={cn(
         "inline-flex items-center justify-center font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sig-1)] focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base",
         "disabled:opacity-50 disabled:cursor-not-allowed",
         variants[variant],
         sizes[size],

@@ -6,6 +6,30 @@ This folder is a **sequential execution plan** for an AI coder. Each numbered fi
 
 ---
 
+## Prerequisites & Environment Setup
+
+Before starting the enhancement phases, ensure your local environment is configured:
+
+### 1. Local Database Setup (MySQL)
+To run the Next.js frontend, you need a local MySQL instance.
+- **Option 1: XAMPP (Easiest)**: Download **XAMPP for Windows** from [apachefriends.org](https://www.apachefriends.org/). Open the XAMPP Control Panel and **Start** both **Apache** and **MySQL**. Your database user will be `root` with a blank password.
+- **Option 2: Official MySQL Installer**: Download from [dev.mysql.com](https://dev.mysql.com/downloads/installer/) and set a root password during installation.
+
+Once MySQL is running, open `phpMyAdmin` (via XAMPP) or your MySQL client, go to the **SQL** tab, and run `CREATE DATABASE supplychain;`. Ensure your `frontend/.env.local` matches these credentials (`DB_USER=root`, `DB_PASSWORD=`).
+
+### 2. Wallet Setup (MetaMask)
+To interact with the local blockchain, you need a crypto wallet:
+1. Install the **MetaMask** browser extension.
+2. Open MetaMask and add a custom network:
+   - **Network Name:** Hardhat Local
+   - **RPC URL:** `http://127.0.0.1:8545`
+   - **Chain ID:** `31337`
+   - **Currency Symbol:** ETH
+3. When you run the local blockchain (`npx hardhat node`), it will print 20 test accounts with private keys. Copy the **Private Key for Account #0**.
+4. In MetaMask, click your account icon, select **Import Account**, and paste the private key. This account will automatically hold the `MANUFACTURER` role.
+
+---
+
 ## How to use this folder
 
 1. Open `01_phase-foundation.md`. Copy its **entire contents** and paste it into the AI coder as the sole instruction.
@@ -43,8 +67,12 @@ This folder is a **sequential execution plan** for an AI coder. Each numbered fi
 | 18 | `18_phase-a11y-polish.md` | Reduced-motion, focus rings, ARIA | |
 | 19 | `19_phase-documentation.md` | Rewrite `documentation_group13.md` w/ Figure X.Y | |
 | 20 | `20_phase-presentation-readme.md` | Plain-language `PRESENTATION.md` for demo | |
+| 21 | `21_phase-contacts-and-transfer.md` | Address book (contacts CRUD) + Transfer Ownership / Update Status actions | |
+| 22 | `22_phase-theme-overhaul.md` | Distinctive palette, aurora background, theme switcher (Nebula / Aurora / Obsidian), role-tinted surfaces | |
 
 Phases 15, 16, 17 are marked "proposal parity" — they exist because Part 1 promised these features. Do not skip them.
+
+Phases 21 and 22 were added after an initial review — 21 makes transfer-ownership usable in one click, 22 replaces the generic indigo/cyan defaults with a designed colour system.
 
 ---
 

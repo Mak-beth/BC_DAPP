@@ -20,14 +20,14 @@ export function StatusProgressBar({ current }: { current: ProductStatus }) {
             <div className="flex flex-col items-center min-w-0">
               <div className={cn(
                 "relative grid place-items-center w-9 h-9 rounded-full text-xs font-bold transition-colors",
-                done    && !active && "bg-emerald-500/20 border border-emerald-400/50 text-emerald-200",
-                active  && "bg-indigo-500/25 border border-indigo-400/70 text-white shadow-glow",
+                done    && !active && "bg-[color:var(--role-ret)]/20 border border-[color:var(--role-ret)]/50 text-[color:var(--role-ret)]",
+                active  && "bg-[color:var(--sig-1)]/25 border border-[color:var(--sig-1)]/70 text-white shadow-sig",
                 !done   && "bg-white/[0.04] border border-border-subtle text-gray-500"
               )}>
                 {i + 1}
-                {active && <motion.span initial={{ scale: 0.9, opacity: 0.8 }} animate={{ scale: 1.25, opacity: 0 }} transition={{ duration: 1.4, repeat: Infinity }} className="absolute inset-0 rounded-full ring-2 ring-indigo-400/60" />}
+                {active && <motion.span initial={{ scale: 0.9, opacity: 0.8 }} animate={{ scale: 1.25, opacity: 0 }} transition={{ duration: 1.4, repeat: Infinity }} className="absolute inset-0 rounded-full ring-2 ring-[color:var(--sig-1)]/60" />}
               </div>
-              <span className={cn("mt-1.5 text-[11px] uppercase tracking-wide truncate", active ? "text-white font-semibold" : done ? "text-emerald-300" : "text-gray-500")}>
+              <span className={cn("mt-1.5 text-[11px] uppercase tracking-wide truncate", active ? "text-white font-semibold" : done ? "text-[color:var(--role-ret)]" : "text-gray-500")}>
                 {labels[s]}
               </span>
             </div>
@@ -37,7 +37,7 @@ export function StatusProgressBar({ current }: { current: ProductStatus }) {
                   initial={{ width: 0 }}
                   animate={{ width: i < idx ? "100%" : "0%" }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-400 to-emerald-500"
+                  className="absolute inset-y-0 left-0 bg-[color:var(--role-ret)]"
                 />
               </div>
             )}

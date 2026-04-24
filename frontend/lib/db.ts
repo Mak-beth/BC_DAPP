@@ -1,6 +1,6 @@
 import mysql, { type RowDataPacket } from "mysql2/promise";
 
-const pool = mysql.createPool({
+export const pool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || "root",
@@ -53,6 +53,21 @@ export async function createTables(): Promise<void> {
         FOREIGN KEY (product_id) REFERENCES products(id)
           ON DELETE CASCADE
           ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await query<unknown>(`
+      CREATE TABLE IF NOT EXISTS contacts (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        owner_wallet VARCHAR(42) NOT NULL,
+        contact_address VARCHAR(42) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        role ENUM('MANUFACTURER','DISTRIBUTOR','RETAILER') NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_owner_contact (owner_wallet, contact_address),
+        INDEX idx_owner (owner_wallet)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 

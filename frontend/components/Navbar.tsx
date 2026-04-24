@@ -7,11 +7,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link2, Menu, X } from "lucide-react";
 import { useWallet } from "@/lib/WalletContext";
 import WalletConnect from "./WalletConnect";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const links = [
   { href: "/dashboard",   label: "Dashboard",   role: "any" as const },
   { href: "/add-product", label: "Add Product", role: "MANUFACTURER" as const },
   { href: "/verify",      label: "Verify",      role: "any" as const },
+  { href: "/contacts",    label: "Contacts",    role: "any" as const },
   { href: "/audit",       label: "Audit",       role: "any" as const },
 ];
 
@@ -30,7 +32,7 @@ export default function Navbar() {
         {/* Logo + desktop links */}
         <div className="flex items-center gap-8">
           <Link href="/dashboard" className="flex items-center gap-2 group">
-            <span className="grid place-items-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-400 shadow-glow">
+            <span className="grid place-items-center w-8 h-8 rounded-lg bg-gradient-sig shadow-sig">
               <Link2 className="w-4 h-4 text-white" />
             </span>
             <span className="text-gradient text-lg font-bold tracking-tight">
@@ -49,7 +51,7 @@ export default function Navbar() {
                     {active && (
                       <motion.span
                         layoutId="nav-pill"
-                        className="absolute inset-0 rounded-md bg-gradient-to-br from-indigo-500/30 to-cyan-400/20 border border-indigo-400/40 shadow-glow"
+                        className="absolute inset-0 rounded-md bg-[color:var(--sig-1)]/15 border border-[color:var(--sig-1)]/40 shadow-sig-sm"
                         transition={{ type: "spring", stiffness: 260, damping: 24 }}
                       />
                     )}
@@ -65,7 +67,8 @@ export default function Navbar() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex items-center gap-2">
+            <ThemeSwitcher />
             <WalletConnect />
           </div>
           <button

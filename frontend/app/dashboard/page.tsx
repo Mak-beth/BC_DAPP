@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Boxes, Truck, PackageCheck, Coins, Search } from "lucide-react";
 import { useWallet } from "@/lib/WalletContext";
 import { getContract, statusIndexToString } from "@/lib/contract";
-import type { Product, DbProduct } from "@/lib/types";
+import type { Product, DbProduct, ContactRole } from "@/lib/types";
 import ProductCard from "@/components/ProductCard";
 import { ProductCardSkeleton } from "@/components/ProductCardSkeleton";
 import { StatTile } from "@/components/StatTile";
@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { cn } from "@/lib/cn";
 
 export default function Dashboard() {
   const { walletState } = useWallet();
@@ -22,34 +23,35 @@ export default function Dashboard() {
   const [loading, setLoading]   = useState(false);
   const [query, setQuery]       = useState("");
 
-  useEffect(() => {
-    async function fetchOwnedProducts() {
-      if (!walletState.isConnected || !walletState.address) return;
-      setLoading(true);
-      try {
-        const contract = await getContract(false);
-        const total = Number(await contract.getTotalProducts());
-        if (total === 0) { setProducts([]); return; }
-        const ids = Array.from({ length: total }, (_, i) => i + 1);
-        const all = await Promise.all(ids.map((id) => contract.getProduct(id)));
-        const owned: Product[] = all
-          .filter((p) => p.currentOwner.toLowerCase() === walletState.address!.toLowerCase())
-          .map((p) => ({
-            id: Number(p.id),
-            name: p.name,
-            origin: p.origin,
-            batchNumber: p.batchNumber,
-            currentOwner: p.currentOwner,
-            status: statusIndexToString(p.status),
-            createdAt: Number(p.createdAt),
-          }));
-        setProducts(owned);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to load products");
-      } finally {
-        setLoading(false);
-      }
+  async function fetchOwnedProducts() {
+    if (!walletState.isConnected || !walletState.address) return;
+    setLoading(true);
+    try {
+      const contract = await getContract(false);
+      const total = Number(await contract.getTotalProducts());
+      if (total === 0) { setProducts([]); return; }
+      const ids = Array.from({ length: total }, (_, i) => i + 1);
+      const all = await Promise.all(ids.map((id) => contract.getProduct(id)));
+      const owned: Product[] = all
+        .filter((p) => p.currentOwner.toLowerCase() === walletState.address!.toLowerCase())
+        .map((p) => ({
+          id: Number(p.id),
+          name: p.name,
+          origin: p.origin,
+          batchNumber: p.batchNumber,
+          currentOwner: p.currentOwner,
+          status: statusIndexToString(p.status),
+          createdAt: Number(p.createdAt),
+        }));
+      setProducts(owned);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load products");
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
     fetchOwnedProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletState.address, walletState.isConnected]);
@@ -83,7 +85,14 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <motion.header initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.header
+        className={cn("rounded-2xl surface-glass p-6", 
+          walletState.role === "MANUFACTURER" ? "surface-tint-mfr" :
+          walletState.role === "DISTRIBUTOR" ? "surface-tint-dst" :
+          walletState.role === "RETAILER" ? "surface-tint-ret" : ""
+        )}
+        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      >
         <p className="text-sm text-gray-400">Welcome back</p>
         <h1 className="text-3xl font-bold text-gradient">Your Supply Chain</h1>
         <p className="text-gray-400 mt-1 text-sm">
@@ -148,6 +157,9 @@ export default function Dashboard() {
                 creator_wallet: walletState.address ?? null,
               } as unknown as DbProduct}
               status={p.status}
+              canAct={true}
+              userRole={walletState.role === "NONE" ? undefined : (walletState.role as ContactRole)}
+              onChanged={() => { fetchOwnedProducts(); }}
             />
           ))}
         </motion.div>
