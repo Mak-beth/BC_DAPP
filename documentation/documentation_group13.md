@@ -1643,22 +1643,21 @@ This project ships with 43 passing tests covering every smart-contract function 
 
 ## Screenshots
 
-- `[INSERT SCREENSHOT — Dashboard with role badge + stat tiles]`
-- `[INSERT SCREENSHOT — Add Product, step 3 review]`
-- `[INSERT SCREENSHOT — Add Product, success screen with confetti + QR]`
-- `[INSERT SCREENSHOT — Track page with timeline + status progress bar + QR]`
-- `[INSERT SCREENSHOT — Track page with SensorChart showing temperature and humidity readings]`
-- `[INSERT SCREENSHOT — Track page with RecallBanner (red alert) visible at top]`
-- `[INSERT SCREENSHOT — IssueRecallModal open, reason textarea filled]`
-- `[INSERT SCREENSHOT — Verify page with authenticity seal]`
-- `[INSERT SCREENSHOT — Verify page with RecallBanner for a recalled product]`
-- `[INSERT SCREENSHOT — Verify page with QR scanner open, Upload tab]`
-- `[INSERT SCREENSHOT — IPFS gateway showing the actual certificate file]`
-- `[INSERT SCREENSHOT — Audit page with filters applied + donut chart]`
-- `[INSERT SCREENSHOT — IoT Simulator page, readings submitted successfully]`
-- `[INSERT SCREENSHOT — Contacts page with saved contact list and role badges]`
-- `[INSERT SCREENSHOT — Transfer Ownership modal, ContactPicker showing saved contacts tab]`
-- `[INSERT SCREENSHOT — ThemeSwitcher open, Aurora theme active, full dashboard]`
+- ![Dashboard with role badge and stat tiles](screenshots/dashboard.png)
+- ![Add Product, step 3 review](screenshots/add-product-review.png)
+- ![Add Product, success screen with confetti and QR](screenshots/add-product-success.png)
+- ![Track page with timeline, status progress bar, and QR](screenshots/track-timeline.png)
+- ![Track page with SensorChart showing temperature and humidity readings](screenshots/track-sensor-chart.png)
+- ![Track page with RecallBanner (red alert) visible at top](screenshots/track-recall-banner.png)
+- ![IssueRecallModal open, reason textarea filled](screenshots/issue-recall-modal.png)
+- ![Verify page with authenticity seal](screenshots/verify-seal.png)
+- ![Verify page with RecallBanner for a recalled product](screenshots/verify-recall.png)
+- ![Verify page with QR scanner open, Upload tab](screenshots/verify-qr-scanner.png)
+- ![Audit page with filters applied and donut chart](screenshots/audit-filters.png)
+- ![IoT Simulator page, readings submitted successfully](screenshots/iot-simulator.png)
+- ![Contacts page with saved contact list and role badges](screenshots/contacts-page.png)
+- ![Transfer Ownership modal, ContactPicker showing saved contacts tab](screenshots/transfer-modal.png)
+- ![ThemeSwitcher open, Aurora theme active, full dashboard](screenshots/theme-aurora.png)
 
 ---
 
