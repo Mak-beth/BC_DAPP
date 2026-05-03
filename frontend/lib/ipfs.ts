@@ -1,5 +1,5 @@
 export function gatewayUrl(cid: string): string {
-  const base = process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "http://127.0.0.1:8080";
+  const base = process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "http://127.0.0.1:8081";
   return `${base}/ipfs/${cid}`;
 }
 
