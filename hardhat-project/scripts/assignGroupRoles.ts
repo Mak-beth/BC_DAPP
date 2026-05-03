@@ -17,10 +17,10 @@ async function main() {
 
   // 👇 PASTE YOUR TEAM'S WALLET ADDRESSES HERE
   const team = [
-    { name: "Manufacturer", address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", role: 1 },
+    { name: "Manufacturer 2", address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", role: 1 },
     { name: "Distributor", address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", role: 2 },
     { name: "Retailer", address: "0x90F79bf6EB2c4f870365E785982E1f101E93b906", role: 3 },
-    { name: "Abubaker", address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", role: 1 }, // Admin
+    { name: "Manufacturer", address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", role: 1 }, // Admin
   ];
 
   console.log("Assigning roles to group members...");
