@@ -6,7 +6,7 @@
 | NOOR KHALIL ABDULLAH KHALED | TP078880 |
 | TAHA FAHD AHMED MOHAMMED THABIT | TP078281 |
 | ABUBAKER ELSIDDIG TAGELDEEN SIDDIG | TP078003 |
-| MUHMMAD AHMED KHAN | TP069769 |
+| MUHAMMAD AHMED KHAN | TP069769 |
 
 ---
 
@@ -595,7 +595,7 @@ export async function getContract(withSigner = false): Promise<Contract> {
 
 This feature closes the largest gap between Part 1 and Part 2: Part 1 §4.3 and §4.5 promised hybrid on-chain / off-chain storage with IPFS for certificates, with the CID anchored on-chain. Phase 15 replaces the earlier SHA-256 filesystem approach with a real IPFS upload, and the returned `bafy…` CID is passed to `addCertificationHash` — matching the exact data-table design in Part 1 §4.5.
 
-**Figure 6.1 — `uploadToIPFS` helper**
+**Figure 5.1 — `uploadToIPFS` helper**
 
 ```typescript
 /** Upload a file from the browser by POSTing to our /api/certifications proxy. */
@@ -612,11 +612,11 @@ export async function uploadToIPFS(file: File): Promise<{ cid: string; fileName:
 }
 ```
 
-**Figure 6.1 — `uploadToIPFS` helper.** *Source: `frontend/lib/ipfs.ts` lines 11–22.*
+**Figure 5.1 — `uploadToIPFS` helper.** *Source: `frontend/lib/ipfs.ts` lines 11–22.*
 
 ---
 
-**Figure 6.2 — `addCertificationHash` Solidity function**
+**Figure 5.2 — `addCertificationHash` Solidity function**
 
 ```solidity
     function addCertificationHash(
@@ -644,11 +644,11 @@ export async function uploadToIPFS(file: File): Promise<{ cid: string; fileName:
     }
 ```
 
-**Figure 6.2 — `addCertificationHash` Solidity function.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 183–205.*
+**Figure 5.2 — `addCertificationHash` Solidity function.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 183–205.*
 
 ---
 
-**Figure 6.3 — IPFS upload then on-chain anchor call site**
+**Figure 5.3 — IPFS upload then on-chain anchor call site**
 
 ```typescript
       if (certFile) {
@@ -660,7 +660,7 @@ export async function uploadToIPFS(file: File): Promise<{ cid: string; fileName:
       }
 ```
 
-**Figure 6.3 — IPFS upload then on-chain anchor.** *Source: `frontend/app/add-product/page.tsx` lines 76–82.*
+**Figure 5.3 — IPFS upload then on-chain anchor.** *Source: `frontend/app/add-product/page.tsx` lines 76–82.*
 
 ---
 
@@ -668,7 +668,7 @@ export async function uploadToIPFS(file: File): Promise<{ cid: string; fileName:
 
 This feature implements the product provenance history view and the QR code promised in Part 1 §5.2.1. The QR encodes `/verify?id=<n>` so any retailer or consumer can scan the physical packaging and reach the public verification page directly. The `HistoryTimeline` reads the immutable `history` array from the contract and renders it with staggered Framer Motion animations.
 
-**Figure 7.1 — `getHistory` Solidity function**
+**Figure 6.1 — `getHistory` Solidity function**
 
 ```solidity
     function getHistory(uint256 id) external view productExists(id) returns (HistoryEntry[] memory) {
@@ -676,11 +676,11 @@ This feature implements the product provenance history view and the QR code prom
     }
 ```
 
-**Figure 7.1 — `getHistory` Solidity function.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 175–177.*
+**Figure 6.1 — `getHistory` Solidity function.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 175–177.*
 
 ---
 
-**Figure 7.2 — `HistoryTimeline` component**
+**Figure 6.2 — `HistoryTimeline` component**
 
 ```typescript
 export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
@@ -725,11 +725,11 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
 }
 ```
 
-**Figure 7.2 — `HistoryTimeline` component.** *Source: `frontend/app/track/[id]/_components/HistoryTimeline.tsx` lines 12–51.*
+**Figure 6.2 — `HistoryTimeline` component.** *Source: `frontend/app/track/[id]/_components/HistoryTimeline.tsx` lines 12–51.*
 
 ---
 
-**Figure 7.3 — `ProductQR` component**
+**Figure 6.3 — `ProductQR` component**
 
 ```typescript
 export function ProductQR({ productId, size = 160 }: { productId: number; size?: number }) {
@@ -763,7 +763,7 @@ export function ProductQR({ productId, size = 160 }: { productId: number; size?:
 }
 ```
 
-**Figure 7.3 — `ProductQR` component.** *Source: `frontend/components/ProductQR.tsx` lines 8–36.*
+**Figure 6.3 — `ProductQR` component.** *Source: `frontend/components/ProductQR.tsx` lines 8–36.*
 
 ---
 
@@ -771,7 +771,7 @@ export function ProductQR({ productId, size = 160 }: { productId: number; size?:
 
 The MySQL layer exists to satisfy Part 1 §4.3 hybrid architecture: fast UI queries ("show my products") that would be too slow or costly to serve from the blockchain RPC. The blockchain remains the source of truth for ownership and status; MySQL stores display metadata only.
 
-**Figure 8.1 — POST handler for `/api/products`**
+**Figure 7.1 — POST handler for `/api/products`**
 
 ```typescript
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -822,11 +822,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 }
 ```
 
-**Figure 8.1 — POST handler for `/api/products`.** *Source: `frontend/app/api/products/route.ts` lines 29–74.*
+**Figure 7.1 — POST handler for `/api/products`.** *Source: `frontend/app/api/products/route.ts` lines 29–74.*
 
 ---
 
-**Figure 8.2 — MySQL connection pool**
+**Figure 7.2 — MySQL connection pool**
 
 ```typescript
 export const pool = mysql.createPool({
@@ -840,7 +840,7 @@ export const pool = mysql.createPool({
 });
 ```
 
-**Figure 8.2 — `mysql2/promise` connection pool.** *Source: `frontend/lib/db.ts` lines 3–11.*
+**Figure 7.2 — `mysql2/promise` connection pool.** *Source: `frontend/lib/db.ts` lines 3–11.*
 
 ---
 
@@ -848,7 +848,7 @@ export const pool = mysql.createPool({
 
 This feature implements the audit dashboard with product / batch / date-range filters committed to in Part 1 §5.2.1. Filter state is synced to the URL via `useSearchParams` so a regulator can bookmark or share a filtered view — a detail that demonstrates production-quality engineering beyond the minimum requirement.
 
-**Figure 9.1 — `FilterBar` component**
+**Figure 8.1 — `FilterBar` component**
 
 ```typescript
 export function FilterBar({ actions, onChange }: FilterBarProps) {
@@ -917,11 +917,11 @@ export function FilterBar({ actions, onChange }: FilterBarProps) {
 }
 ```
 
-**Figure 9.1 — `FilterBar` with URL-synchronised state.** *Source: `frontend/app/audit/_components/FilterBar.tsx` lines 26–89.*
+**Figure 8.1 — `FilterBar` with URL-synchronised state.** *Source: `frontend/app/audit/_components/FilterBar.tsx` lines 26–89.*
 
 ---
 
-**Figure 9.2 — Filter composition (AND) in audit page**
+**Figure 8.2 — Filter composition (AND) in audit page**
 
 ```typescript
   const filtered = useMemo(() => {
@@ -942,7 +942,7 @@ export function FilterBar({ actions, onChange }: FilterBarProps) {
   }, [rows, filters]);
 ```
 
-**Figure 9.2 — Client-side filter composition (AND).** *Source: `frontend/app/audit/page.tsx` lines 41–56.*
+**Figure 8.2 — Client-side filter composition (AND).** *Source: `frontend/app/audit/page.tsx` lines 41–56.*
 
 ---
 
@@ -952,7 +952,7 @@ Phase 21 surfaces `transferOwnership(productID, newOwner)` from Part 1 §5.3 as 
 
 The contacts table (MySQL) stores owner-wallet → contact-address mappings with an optional name and role label. The `ContactPicker` component offers two tabs: pick from saved contacts, or enter a new address with a "Save to contacts" checkbox. `TransferOwnershipModal` calls `contract.transferOwnership(id, address)` and saves the new contact if the checkbox is checked. `UpdateStatusModal` advances the product status one step and shows a terminal-state message when SOLD.
 
-**Figure 11.1 — `ContactPicker` two-tab combobox**
+**Figure 9.1 — `ContactPicker` two-tab combobox**
 
 ```typescript
   return (
@@ -999,11 +999,11 @@ The contacts table (MySQL) stores owner-wallet → contact-address mappings with
           </button>
 ```
 
-**Figure 11.1 — `ContactPicker` two-tab combobox (mode toggle + dropdown trigger).** *Source: `frontend/components/ContactPicker.tsx` lines 75–116.*
+**Figure 9.1 — `ContactPicker` two-tab combobox (mode toggle + dropdown trigger).** *Source: `frontend/components/ContactPicker.tsx` lines 75–116.*
 
 ---
 
-**Figure 11.2 — `TransferOwnershipModal` contract call**
+**Figure 9.2 — `TransferOwnershipModal` contract call**
 
 ```typescript
   async function submit() {
@@ -1041,11 +1041,11 @@ The contacts table (MySQL) stores owner-wallet → contact-address mappings with
   }
 ```
 
-**Figure 11.2 — `TransferOwnershipModal` contract call.** *Source: `frontend/components/TransferOwnershipModal.tsx` lines 30–62.*
+**Figure 9.2 — `TransferOwnershipModal` contract call.** *Source: `frontend/components/TransferOwnershipModal.tsx` lines 30–62.*
 
 ---
 
-**Figure 11.3 — `/api/contacts` POST handler (upsert)**
+**Figure 9.3 — `/api/contacts` POST handler (upsert)**
 
 ```typescript
 export async function POST(req: NextRequest) {
@@ -1079,11 +1079,11 @@ export async function POST(req: NextRequest) {
 }
 ```
 
-**Figure 11.3 — `/api/contacts` POST handler (upsert).** *Source: `frontend/app/api/contacts/route.ts` lines 26–54.*
+**Figure 9.3 — `/api/contacts` POST handler (upsert).** *Source: `frontend/app/api/contacts/route.ts` lines 26–54.*
 
 ---
 
-**Figure 11.4 — `UpdateStatusModal` sequential-advance logic**
+**Figure 9.4 — `UpdateStatusModal` sequential-advance logic**
 
 ```typescript
 const next: Record<ProductStatus, ProductStatus | null> = {
@@ -1116,17 +1116,17 @@ const statusIndex: Record<ProductStatus, number> = {
   }
 ```
 
-**Figure 11.4 — `UpdateStatusModal` sequential-advance logic.** *Source: `frontend/components/UpdateStatusModal.tsx` lines 10–18 and 33–48.*
+**Figure 9.4 — `UpdateStatusModal` sequential-advance logic.** *Source: `frontend/components/UpdateStatusModal.tsx` lines 10–18 and 33–48.*
 
 ---
 
-### Feature 11 — IoT Sensor Simulation (Phase 23)
+### Feature 10 — IoT Sensor Simulation (Phase 23)
 
 This feature implements the IoT sensor integration described in Part 1 §5.4 by adding an on-chain `logSensorReading` function that stores temperature, humidity, and location readings keyed by product ID, and exposing them as a live chart on the track page — closing the gap between the Part 1 proposal and Part 2 delivery.
 
 A dedicated `/iot-simulator` page lets any DISTRIBUTOR or RETAILER wallet submit sensor readings (temperature °C, humidity %, location string) for any product. Readings are stored on-chain in a `SensorEntry` struct array via `getSensorReadings`. The track page fetches all readings and renders them in a `SensorChart` component (recharts line chart, temperature on the primary axis, humidity on the secondary).
 
-**Figure 13.1 — `logSensorReading` Solidity function**
+**Figure 10.1 — `logSensorReading` Solidity function**
 
 ```solidity
     function logSensorReading(
@@ -1148,11 +1148,11 @@ A dedicated `/iot-simulator` page lets any DISTRIBUTOR or RETAILER wallet submit
     }
 ```
 
-**Figure 13.1 — `logSensorReading` Solidity function.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 211–227.*
+**Figure 10.1 — `logSensorReading` Solidity function.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 211–227.*
 
 ---
 
-**Figure 13.2 — `getSensorReadings` Solidity view function**
+**Figure 10.2 — `getSensorReadings` Solidity view function**
 
 ```solidity
     function getSensorReadings(uint256 id)
@@ -1165,11 +1165,11 @@ A dedicated `/iot-simulator` page lets any DISTRIBUTOR or RETAILER wallet submit
     }
 ```
 
-**Figure 13.2 — `getSensorReadings` Solidity view function.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 229–236.*
+**Figure 10.2 — `getSensorReadings` Solidity view function.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 229–236.*
 
 ---
 
-**Figure 13.3 — `SensorChart` component**
+**Figure 10.3 — `SensorChart` component**
 
 ```typescript
 export function SensorChart({ readings }: Props) {
@@ -1201,17 +1201,17 @@ export function SensorChart({ readings }: Props) {
 }
 ```
 
-**Figure 13.3 — `SensorChart` dual-axis line chart.** *Source: `frontend/app/track/[id]/_components/SensorChart.tsx` lines 10–36.*
+**Figure 10.3 — `SensorChart` dual-axis line chart.** *Source: `frontend/app/track/[id]/_components/SensorChart.tsx` lines 10–36.*
 
 ---
 
-### Feature 12 — Product Recall System (Phase 24)
+### Feature 11 — Product Recall System (Phase 24)
 
 This feature implements the product safety management requirement implicit in Part 1 §5.3 and satisfies the "complete implementation of proposed smart-contract functions" marking criterion by giving the MANUFACTURER role the ability to issue and lift product recalls on-chain, with recall status surfaced as a red banner on every public-facing product page.
 
 The contract stores a `RecallEntry` struct (`active`, `reason`, `issuedBy`, `timestamp`) per product in a `recalls` mapping. `issueRecall` and `liftRecall` are gated to `onlyRole(MANUFACTURER)` and append entries to the product history. The frontend surfaces recall status via three touch points: a `RecallBanner` animated alert on the verify and track pages, a RECALLED badge on every `ProductCard`, and an `IssueRecallModal` on the dashboard and track page that lets the manufacturer issue or lift a recall in one click.
 
-**Figure 14.1 — `issueRecall` and `liftRecall` Solidity functions**
+**Figure 11.1 — `issueRecall` and `liftRecall` Solidity functions**
 
 ```solidity
     function issueRecall(uint256 productId, string memory reason)
@@ -1257,11 +1257,11 @@ The contract stores a `RecallEntry` struct (`active`, `reason`, `issuedBy`, `tim
     }
 ```
 
-**Figure 14.1 — `issueRecall` and `liftRecall` Solidity functions.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 238–278.*
+**Figure 11.1 — `issueRecall` and `liftRecall` Solidity functions.** *Source: `hardhat-project/contracts/SupplyChain.sol` lines 238–278.*
 
 ---
 
-**Figure 14.2 — `RecallBanner` component**
+**Figure 11.2 — `RecallBanner` component**
 
 ```typescript
 export function RecallBanner({ recall }: Props) {
@@ -1293,11 +1293,11 @@ export function RecallBanner({ recall }: Props) {
 }
 ```
 
-**Figure 14.2 — `RecallBanner` component.** *Source: `frontend/components/RecallBanner.tsx` lines 9–35.*
+**Figure 11.2 — `RecallBanner` component.** *Source: `frontend/components/RecallBanner.tsx` lines 9–35.*
 
 ---
 
-**Figure 14.3 — `IssueRecallModal` contract call**
+**Figure 11.3 — `IssueRecallModal` contract call**
 
 ```typescript
   async function handleSubmit(e: React.FormEvent) {
@@ -1325,17 +1325,17 @@ export function RecallBanner({ recall }: Props) {
   }
 ```
 
-**Figure 14.3 — `IssueRecallModal` contract call.** *Source: `frontend/components/IssueRecallModal.tsx` lines 21–43.*
+**Figure 11.3 — `IssueRecallModal` contract call.** *Source: `frontend/components/IssueRecallModal.tsx` lines 21–43.*
 
 ---
 
-### Feature 13 — Three-Theme Design System (Phase 22)
+### Feature 12 — Three-Theme Design System (Phase 22)
 
 Phase 22 addresses the A+ marking criterion "outstanding quality; complete in every way" (80–100%) by replacing the generic indigo/cyan hardcoded Tailwind classes with a CSS custom-property system. Three named themes — Nebula (violet/indigo/cyan, default), Aurora (mint/sky/violet), Obsidian (monochrome/bronze) — demonstrate that the colour architecture is correct: adding a fourth theme requires only one CSS block, not edits to every component.
 
 All components consume `--sig-1`, `--sig-2`, `--sig-3` (signature gradient stops), `--role-mfr`, `--role-dst`, `--role-ret`, and `--verified`. The `ThemeProvider` reads localStorage on mount, applies `theme-aurora` or `theme-obsidian` as a class on `<html>`, and exposes `setTheme` via React context. `AuroraBackground` renders three drifting radial-gradient blobs with a vignette and film-grain noise overlay — the visual signature of the Nebula theme.
 
-**Figure 15.1 — `ThemeProvider` and `useTheme`**
+**Figure 12.1 — `ThemeProvider` and `useTheme`**
 
 ```typescript
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -1367,11 +1367,11 @@ export function useTheme() {
 }
 ```
 
-**Figure 15.1 — `ThemeProvider` and `useTheme`.** *Source: `frontend/lib/theme.tsx` lines 18–44.*
+**Figure 12.1 — `ThemeProvider` and `useTheme`.** *Source: `frontend/lib/theme.tsx` lines 18–44.*
 
 ---
 
-**Figure 15.2 — `AuroraBackground` drifting blob animation**
+**Figure 12.2 — `AuroraBackground` drifting blob animation**
 
 ```typescript
 export function AuroraBackground() {
@@ -1399,11 +1399,11 @@ export function AuroraBackground() {
 }
 ```
 
-**Figure 15.2 — `AuroraBackground` drifting blob animation.** *Source: `frontend/components/AuroraBackground.tsx` lines 3–25.*
+**Figure 12.2 — `AuroraBackground` drifting blob animation.** *Source: `frontend/components/AuroraBackground.tsx` lines 3–25.*
 
 ---
 
-**Figure 15.3 — `ThemeSwitcher` palette tiles**
+**Figure 12.3 — `ThemeSwitcher` palette tiles**
 
 ```typescript
 export function ThemeSwitcher() {
@@ -1452,11 +1452,11 @@ export function ThemeSwitcher() {
 }
 ```
 
-**Figure 15.3 — `ThemeSwitcher` palette tiles.** *Source: `frontend/components/ThemeSwitcher.tsx` lines 9–52.*
+**Figure 12.3 — `ThemeSwitcher` palette tiles.** *Source: `frontend/components/ThemeSwitcher.tsx` lines 9–52.*
 
 ---
 
-**Figure 15.4 — CSS variable block for all three themes**
+**Figure 12.4 — CSS variable block for all three themes**
 
 ```css
 :root {
@@ -1523,7 +1523,7 @@ html.theme-obsidian {
 }
 ```
 
-**Figure 15.4 — CSS variable block (`:root`, `.theme-aurora`, `.theme-obsidian`).** *Source: `frontend/app/globals.css` lines 5–66.*
+**Figure 12.4 — CSS variable block (`:root`, `.theme-aurora`, `.theme-obsidian`).** *Source: `frontend/app/globals.css` lines 5–66.*
 
 ---
 
